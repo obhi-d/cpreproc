@@ -1,2 +1,2 @@
-# cpreproc
+# PPR
 Preprocessor for C like language
