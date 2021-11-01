@@ -4,7 +4,7 @@
 namespace ppr
 {
 class transform;
-class sink
+class PPR_API sink
 {
 public:
   sink(int max_consequitive_empty_lines = 1, bool ignore_all_comments = true)

@@ -8,7 +8,13 @@
 
 namespace ppr
 {
-
+/*
+* No string content is owned by transform, when data is pushed it is expected
+* that the memory is managed externally and that the memory remains valid
+* during the course of the lifetime of transform object.
+* Ideally you should custom allocate the data memory and push the data accordingly.
+* Even macro names are expected to be managed externally.
+*/
 struct live_eval;
 class PPR_API transform
 {
@@ -38,7 +44,7 @@ public:
 
   void push_error(std::string_view s, token const& t);
   void push_error(std::string_view s, std::string_view t, loc const& l);
-
+  
 private:
   static inline bool is_token_paste(token const& t) 
   {
@@ -81,6 +87,14 @@ private:
     {
       return (macros.find(value(test)) != macros.end());
     }
+  }
+
+  inline token get(tokenizer& tk) 
+  {
+    std::int16_t source_id = static_cast<std::int16_t>(sources.size() - 1);
+    auto         tok       = tk.get();
+    tok.source_id          = source_id;
+    return tok;
   }
 
   inline void post(token const& t)

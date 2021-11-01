@@ -16,8 +16,8 @@ namespace ppr
 
   struct span
   {
-    loc begin = 0;
-    loc end   = 0;
+    loc begin = {};
+    loc end   = {};
 
     span() = default;
     span(loc l) : begin(l), end(l)
