@@ -5,63 +5,37 @@
 #include <ppr_common.hpp>
 #include <ppr_eval_type.hpp>
 #include <ppr_tokenizer.hpp>
+#include <ppr_sink.hpp>
 
 namespace ppr
 {
 
+struct live_eval;
 class PPR_API transform
 {
 public:
-  struct live_eval
-  {
-    transform&        tr;
-    std::uint32_t     i = 0;
-    vector<token, 8>& expanded;
-    bool              result = 0;
+  using token_cache = vector<token, 8>;
 
-    live_eval(transform& r, vector<token, 8>& e) : tr(r), expanded(e) {}
-
-    token get()
-    {
-      if (i < expanded.size())
-        return expanded[i++];
-      return {};
-    }
-
-    std::string_view value(token const& t)
-    {
-      return tr.value(t);
-    }
-
-    bool error_bit() const
-    {
-      return tr.err_bit;
-    }
-
-    void set_result(ppr::eval_type val)
-    {
-      result = (bool)val;
-    }
-
-    void push_error(ppr::span s, std::string_view err)
-    {
-      tr.push_error(err, "bison", s.begin);
-    }
-  };
-
+  friend class sink;
   friend struct live_eval;
 
-  transform(error_reporter rep) : reporter(std::move(rep)) {}
+  transform(sink& s) : ss(s) {}
 
-  using listener = std::function<void(std::string_view)>;
-  using visitor = std::function<void(token const&)>;
-
-  void push_source(std::string_view sources, listener reciever);
+  void push_source(std::string_view sources);
 
   bool eval(std::string_view sources);
 
-  // template <typename visitor>
-  bool recursive_resolve_internal(token const& it, tokenizer&, visitor);
+  bool recursive_resolve_internal(token const& it, tokenizer&, token_cache&);
+
+  void set_transform_code(bool tc)
+  {
+    transform_code = tc;
+  }
+
+  void set_ignore_disabled(bool ig)
+  {
+    ignore_disabled = ig;
+  }
 
 private:
   token is_defined(tokenizer& tk)
@@ -103,67 +77,88 @@ private:
     }
   }
 
-  void post(token const& t, listener& l)
+  inline void post(token const& t)
   {
-    if (t.whitespaces > 0)
-    {
-      std::string ws(static_cast<std::size_t>(t.whitespaces), ' ');
-      l(ws);
-    }
-
-    l(value(t));
+    ss.filter(t, *this);
   }
 
-  std::string_view value(token const& t)
+  std::string_view value(token const& t) const
   {
     return std::string_view{sources[t.source_id].data() + t.start, static_cast<std::size_t>(t.length)};
   }
 
   struct macro
   {
-    struct wrap
+    struct rtoken
     {
       token t;
       int   replace = -1;
     };
 
-    vector<token, 4> params;
-    vector<wrap, 4>  content;
-    bool             is_function = false;
+    vector<token, 4>  params;
+    vector<rtoken, 4> content;
+    bool              is_function = false;
   };
 
   using macromap = std::unordered_map<std::string_view, macro, ppr::str_hash, ppr::str_equal_test>;
 
-  void read_define(tokenizer&, std::string_view&, macro&, listener& l);
+  void read_define(tokenizer&, std::string_view&, macro&);
 
-  // template <typename visitor>
-  void expand_macro_call(macromap::iterator it, tokenizer&, visitor);
+  void expand_macro_call(macromap::iterator it, tokenizer&, token_cache&);
 
   bool eval(tokenizer&);
-  bool eval(ppr::transform::live_eval& tk);
-  void push_error(std::string_view s, token const& t, loc const& l)
-  {
-    reporter(s, "", t, l);
-    err_bit = true;
-  }
-
-  void push_error(std::string_view s, std::string_view t, loc const& l)
-  {
-    reporter(s, t, {}, l);
-    err_bit = true;
-  }
-
+  bool eval(ppr::live_eval& tk);
+  void push_error(std::string_view s, token const& t, loc const& l);
+  void push_error(std::string_view s, std::string_view t, loc const& l);
+  
   void undefine(tokenizer&);
 
-  error_reporter              reporter;
+  sink&              ss;
   vector<token, 8>            cache;
   vector<std::string_view, 8> sources;
   macromap                    macros;
-  std::int32_t                disable_depth    = 0;
-  std::int32_t                if_depth         = 0;
-  bool                        transform_code   = false;
-  bool                        ignore_disabled  = true;
-  bool                        err_bit          = false;
-  bool                        section_disabled = false;
+  std::int32_t                disable_depth            = 0;
+  std::int32_t                if_depth                 = 0;
+  bool                        transform_code           = false;
+  bool                        ignore_disabled          = true;
+  bool                        err_bit                  = false;
+  bool                        section_disabled         = false;
+};
+
+struct live_eval
+{
+  transform&        tr;
+  std::uint32_t     i = 0;
+  vector<token, 8>& expanded;
+  bool              result = 0;
+
+  live_eval(transform& r, vector<token, 8>& e) : tr(r), expanded(e) {}
+
+  token get()
+  {
+    if (i < expanded.size())
+      return expanded[i++];
+    return {};
+  }
+
+  std::string_view value(token const& t)
+  {
+    return tr.value(t);
+  }
+
+  bool error_bit() const
+  {
+    return tr.err_bit;
+  }
+
+  void set_result(ppr::eval_type val)
+  {
+    result = (bool)val;
+  }
+
+  void push_error(ppr::span s, std::string_view err)
+  {
+    tr.push_error(err, "bison", s.begin);
+  }
 };
 } // namespace ppr

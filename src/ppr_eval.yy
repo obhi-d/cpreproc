@@ -24,12 +24,12 @@ namespace ppr {
 #ifndef YY_NULLPTR
 #  define YY_NULLPTR nullptr
 #endif
-#define YY_DECL extern ppr::parser_impl::symbol_type ppr_lex(ppr::transform::live_eval& ctx)
+#define YY_DECL extern ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 
 }
 
 %define api.location.type {ppr::span}
-%param { ppr::transform::live_eval& ctx }
+%param { ppr::live_eval& ctx }
 %locations
 %initial-action
 {  
@@ -132,7 +132,7 @@ void parser_impl::error(location_type const& l,
   ctx.push_error(l, e);
 }
 
-bool transform::eval(ppr::transform::live_eval& eval) 
+bool transform::eval(ppr::live_eval& eval) 
 {
 	parser_impl parser(eval);
 	//parser.set_debug_level(flags_ & ppr::impl::debug);
@@ -144,7 +144,7 @@ bool transform::eval(ppr::transform::live_eval& eval)
 }
 
 
-ppr::parser_impl::symbol_type ppr_lex(ppr::transform::live_eval& ctx)
+ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 {
 	using namespace ppr;
 	if(!ctx.error_bit())

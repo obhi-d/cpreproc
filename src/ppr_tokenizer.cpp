@@ -1,5 +1,6 @@
 
 #include <ppr_tokenizer.hpp>
+#include <ppr_sink.hpp>
 #include <iostream>
 
 extern ppr::token ppr_tokenize(ppr::tokenizer& ctx, void* yyscanner);
@@ -9,12 +10,12 @@ namespace ppr
 
 void tokenizer::push_error(std::string_view error) 
 {
-  reporter(error, "", {}, location);
+  reporter.error(error, "", {}, location);
 }
 
 void tokenizer::push_error(std::string_view error, std::string_view what) 
 {
-  reporter(error, what, {}, location);
+  reporter.error(error, what, {}, location);
 }
 
 token tokenizer::get()

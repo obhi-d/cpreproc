@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <array>
 #include <ppr_common.hpp>
+#include <ppr_loc.hpp>
 
 namespace ppr
 {

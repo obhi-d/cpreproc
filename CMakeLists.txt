@@ -46,8 +46,8 @@ if (PPR_BUILD_STATIC)
     ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
    "src/ppr_tokenizer.cpp"
-   "src/ppr_macroctx.cpp" 
-   "src/ppr_transform.cpp")
+    
+   "src/ppr_transform.cpp" "src/ppr_sink.cpp")
 else(PPR_BUILD_STATIC)
   add_library(${PPR_TARGET_NAME} SHARED 
    ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp

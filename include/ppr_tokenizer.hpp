@@ -1,24 +1,22 @@
 
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <functional>
 
 #include <ppr_loc.hpp>
 #include <ppr_token.hpp>
 
 namespace ppr
 {
-
-using error_reporter = std::function<void(std::string_view, std::string_view, ppr::token, ppr::loc)>;
-
+class sink;
 class PPR_API tokenizer
 {
 public:
-  tokenizer(std::string_view ss, error_reporter& r) : reporter(r), content(ss)
+  tokenizer(std::string_view ss, sink& r) : reporter(r), content(ss)
   {
     begin_scan();
   }
@@ -38,7 +36,7 @@ public:
     current.whitespaces = static_cast<std::int16_t>(whitespaces);
     current.op          = type;
     current.type        = token_type::ty_operator;
-    
+
     pos_commit += len;
     whitespaces = 0;
     return current;
@@ -98,14 +96,14 @@ public:
   inline token make_braces(char op)
   {
     auto tok = make_token(token_type::ty_braces, 1);
-    tok.op = {op, 0};
+    tok.op   = {op, 0};
     return tok;
   }
 
   inline token make_bracket(char op)
   {
     auto tok = make_token(token_type::ty_bracket, 1);
-    tok.op = {op, 0};
+    tok.op   = {op, 0};
     return tok;
   }
 
@@ -124,12 +122,12 @@ public:
     return make_token(token_type::ty_newline, 1);
   }
 
-  inline token make_string(int len) 
+  inline token make_string(int len)
   {
     return make_token(token_type::ty_string, len);
   }
 
-  inline void skip_commit(int len) 
+  inline void skip_commit(int len)
   {
     pos_commit += len;
   }
@@ -143,7 +141,7 @@ public:
       pos += min;
       if (min < size)
       {
-        data[min]     = EOF;
+        data[min] = EOF;
       }
 
       assert(min <= size);
@@ -182,7 +180,7 @@ public:
   }
 
   void push_error(std::string_view error);
-  
+
   void push_error(std::string_view error, std::string_view token);
 
   inline void columns(int len)
@@ -224,21 +222,19 @@ public:
 
   token peek();
 
- private:
-
-  error_reporter&    reporter;
-  loc                location;
-  int                whitespaces = 0;
-  token              lookahead;
+private:
+  sink& reporter;
+  loc   location;
+  int   whitespaces = 0;
+  token lookahead;
 
   std::string_view content;
   std::int32_t     pos         = 0;
   std::int32_t     pos_commit  = 0;
   std::int32_t     len_reading = 0;
-  bool               ahead       = false;
-  
+  bool             ahead       = false;
 
-  void*            token_scanner = nullptr;
+  void* token_scanner = nullptr;
 };
 
 } // namespace ppr

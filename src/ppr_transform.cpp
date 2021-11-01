@@ -1,11 +1,12 @@
 
 #include <ppr_transform.hpp>
+#include <ppr_sink.hpp>
 
 namespace ppr
 {
 
-//template <typename visitor>
-bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, visitor fv)
+
+bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, token_cache& tcache)
 {
   switch (tok.type)
   {
@@ -18,7 +19,7 @@ bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, visi
     if (v == "defined")
     {
       // asking if this is defined
-      fv(is_defined(tk));
+      tcache.push_back(is_defined(tk));
     }
     else
     {
@@ -27,17 +28,17 @@ bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, visi
       {
         if (it->second.is_function)
         {
-          expand_macro_call(it, tk, std::forward<visitor>(fv));
+          expand_macro_call(it, tk, tcache);
         }
         else
         {
           auto const& content = it->second.content;
           for (auto const& c : content)
-            fv(c.t);
+            tcache.push_back(c.t);
         }
       }
       else
-        fv(tok);
+        tcache.push_back(tok);
     }
   }
   break;
@@ -51,27 +52,30 @@ bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, visi
         tk.get();
         auto res = is_defined(tk);
         res.type = res.type == token_type::ty_true ? token_type::ty_false : token_type::ty_true;
-        fv(res);
+        tcache.push_back(res);
         break;
       }
     }
+    [[fallthrough]];
   default:
-    fv(tok);
+    tcache.push_back(tok);
   }
   return true;
 }
 
-void transform::read_define(tokenizer& tk, std::string_view& name, macro& m, listener& l)
+void transform::read_define(tokenizer& tk, std::string_view& name, macro& m)
 {
-  auto get_tok = [&](bool print)
+  std::int16_t source_id = static_cast<std::int16_t>(sources.size() - 1);
+  auto get_tok = [source_id, &tk, this](bool print)
   {
     auto t = tk.get();
+    t.source_id = source_id;
     if (print)
-      post(t, l);
+      post(t);
     return t;
   };
 
-  std::int16_t source_id = static_cast<std::int16_t>(sources.size() - 1);
+  
   token tok;
   tok           = get_tok(!transform_code);
   tok.source_id = source_id;
@@ -90,7 +94,7 @@ void transform::read_define(tokenizer& tk, std::string_view& name, macro& m, lis
   if (tok.type == token_type::ty_bracket && tok.op[0] == '(' && tok.whitespaces == 0)
   {
     if (!transform_code)
-      post(tok, l);
+      post(tok);
 
     m.is_function = true;
     bool done     = false;
@@ -130,49 +134,45 @@ void transform::read_define(tokenizer& tk, std::string_view& name, macro& m, lis
         
   while (!err_bit && tok.type != token_type::ty_newline)
   {
-    tok.source_id = source_id;
-    bool isparam  = false;
-    if (tok.type == token_type::ty_keyword_ident && m.is_function)
-    {
-      // is it a param?
-      
-      for (std::uint32_t i = 0, en = static_cast<std::uint32_t>(m.params.size()); i < en; ++i)
-      {
-        auto const& vt = m.params[i];
-        if (vt.length == tok.length && value(vt) == value(tok))
-        {
-          macro::wrap w;
-          
-          w.replace = static_cast<int>(i);
-          w.t       = tok;
-          m.content.emplace_back(w);
-          isparam = true; 
-          break;
-        }
-      }
-    }
-    
-    if (!isparam)
-    {
-      if (!recursive_resolve_internal(tok, tk, [&](token const& t) {
-                                        macro::wrap w;
-                                        w.t = t;
-                                        if (!transform_code)
-                                          post(t, l);
-                                        m.content.emplace_back(w);
-        }))
-        return;
-    }
-    else if (!transform_code)
-      post(tok, l);
+    if (!recursive_resolve_internal(tok, tk, cache))
+      break;
     tok = get_tok(false);
   }
+
+  m.content.reserve(cache.size());
+  for (auto const& t : cache)
+  {
+    bool isparam = false;
+    for (std::uint32_t i = 0, en = static_cast<std::uint32_t>(m.params.size()); i < en; ++i)
+    {
+      auto const& vt = m.params[i];
+      if (vt.length == t.length && value(vt) == value(t))
+      {
+        macro::rtoken w;
+
+        w.replace = static_cast<int>(i);
+        w.t       = t;
+        m.content.emplace_back(w);
+        isparam = true;
+        break;
+      }
+    }
+    if (!isparam)
+    {
+      macro::rtoken w;
+      w.t = t;
+      m.content.emplace_back(w);
+    }
+    if (!transform_code && !err_bit)
+      post(t);
+  }
+  cache.clear();
   if (!transform_code && !err_bit)
-    post(tok, l);
+    post(tok);
 }
 
-//template <typename visitor>
-void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, visitor v)
+
+void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, token_cache& tcache)
 {
 
   std::int16_t source_id = static_cast<std::int16_t>(sources.size() - 1);
@@ -192,7 +192,6 @@ void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, visitor 
   auto const&                                      mdef = it->second;
   vector<std::pair<std::int16_t, std::int16_t>, 4> lengths;
   vector<token, 4>                                 captures;
-  std::int16_t                                     length = 0;
   std::int16_t                                     offset = 0;
   bool                                             done   = false;
 
@@ -213,11 +212,12 @@ void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, visitor 
     {
       if (tok.op[0] == ',')
       {
-        lengths.emplace_back(offset, length);
-        offset = length;
+        lengths.emplace_back(offset, static_cast<std::int16_t>(captures.size()));
+        offset = static_cast<std::int16_t>(captures.size());
         break;
       }
     }
+    [[fallthrough]];
     case token_type::ty_bracket:
     {
       if (tok.op[0] == '(')
@@ -229,19 +229,16 @@ void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, visitor 
       {
         if (!--depth)
         {
-          lengths.emplace_back(offset, length);
+          lengths.emplace_back(offset, static_cast<std::int16_t>(captures.size()));
           done = true;
           break;
         }
       }
     }
+    [[fallthrough]];
     default:
-      recursive_resolve_internal(tok, tk,
-                                 [&](token const& t)
-                                 {
-                                   captures.push_back(tok);
-                                   length++;
-                                 });
+      recursive_resolve_internal(tok, tk, captures);
+                                 
             
     }
   }
@@ -265,11 +262,11 @@ void transform::expand_macro_call(macromap::iterator it, tokenizer& tk, visitor 
           t.whitespaces = w.t.whitespaces;
           first         = false;
         }
-        v(t);
+        tcache.push_back(t);
       }
     }
     else
-      v(w.t);
+      tcache.push_back(w.t);
   }
 }
 
@@ -294,9 +291,9 @@ void transform::undefine(tokenizer& tk)
   }
 }
 
-void transform::push_source(std::string_view source, listener l)
+void transform::push_source(std::string_view source)
 {
-  tokenizer tk(source, reporter);
+  tokenizer tk(source, ss);
   
   sources.push_back(source);
 
@@ -325,10 +322,10 @@ void transform::push_source(std::string_view source, listener l)
           macro            m;
           if (!transform_code)
           {
-            post(saved, l);
-            post(tok, l);
+            post(saved);
+            post(tok);
           }
-          read_define(tk, name, m, l);
+          read_define(tk, name, m);
           if (!err_bit)
             macros.emplace(name, std::move(m));
           handled = true;
@@ -393,52 +390,69 @@ void transform::push_source(std::string_view source, listener l)
       }
 
       if (!handled  && (!section_disabled || !ignore_disabled))
-        post(tok, l);
+        post(tok);
     }
     break;
     default:
       if (!(tok.type == token_type::ty_operator && tok.op[0] == '#' && tk.peek().type == token_type::ty_preprocessor))
       {
         if (transform_code && !section_disabled)
-        {
-          recursive_resolve_internal(tok, tk,
-                                     [&](token const& t)
-                                     {
-                                       post(t, l);
-                                     });
+        { 
+          if (tok.type == token_type::ty_keyword_ident)
+          {
+            recursive_resolve_internal(tok, tk, cache);
+            for (auto const& t : cache)
+              post(t);
+            cache.clear();
+          }
+          else 
+            post(tok);
+            
         }
-        else if (!section_disabled || !ignore_disabled)
-          post(tok, l);
+        else if ((!section_disabled || !ignore_disabled))
+          post(tok);
       }
-      else
-        saved = tok;
+      
+      saved = tok;
     }
   }    
 }
 
 bool transform::eval(tokenizer& tk)
 {
-  cache.clear();
   bool done = false;
   while (!err_bit && !done)
   {
     auto tok = tk.get();
-    if (!recursive_resolve_internal(tok, tk, [&](auto const& t) {
-      cache.push_back(t);
-                                    }))
+    if (!recursive_resolve_internal(tok, tk, cache))
       done = true;
   }
 
   // parse
   live_eval le(*this, cache);
-  return eval(le);
+  bool result = eval(le);
+  cache.clear();
+  return result;
 }
-bool transform::eval(std::string_view ss) 
+bool transform::eval(std::string_view sv) 
 {
-  tokenizer tk(ss, reporter);
-  sources.push_back(ss);
+  tokenizer tk(sv, ss);
+  sources.push_back(sv);
   bool result = eval(tk);
   sources.pop_back();
   return result;
 }
+
+void transform::push_error(std::string_view s, token const& t, loc const& l)
+{
+  ss.error(s, "", t, l);
+  err_bit = true;
+}
+
+void transform::push_error(std::string_view s, std::string_view t, loc const& l)
+{
+  ss.error(s, t, {}, l);
+  err_bit = true;
+}
+
 }
