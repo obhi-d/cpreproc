@@ -102,10 +102,10 @@ add_executable(
 target_link_libraries(tokenizer_util PRIVATE ${PPR_TARGET_NAME})
 
 add_executable(
-  transform_util
+  preprocess
   ${PROJECT_SOURCE_DIR}/utility/transform_util.cpp
 )
-target_link_libraries(transform_util PRIVATE ${PPR_TARGET_NAME})
+target_link_libraries(preprocess PRIVATE ${PPR_TARGET_NAME})
 
 # INSTALL
 

@@ -28,10 +28,20 @@ int main(int argc, char* argv[])
 
   for (int i = 1; i < argc; ++i)
   {
-    if (std::string(argv[i]) == "--tc")
+    if (std::string(argv[i]) == "-tc")
       ctx.set_transform_code(true);
-    if (std::string(argv[i]) == "--i")
-      ctx.set_ignore_disabled(true);
+    else if (std::string(argv[i]) == "-di")
+      ctx.set_ignore_disabled(false);
+    else if (std::string(argv[i]) == "-dc")
+      adapter.set_ignore_comments(false);
+    else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h")
+    {
+      std::cout << "preprocess [-tc] [-i] [-nc] [--help] file1 file2\n"
+                   "  -tc preprocess macro usage in code (experimental)\n"
+                   "  -di dont ignore disabled code (print them)\n"
+                   "  -dc dont ignore comments (print them)\n";
+      std::exit(0);
+    }
     else
     {
       file = argv[i];

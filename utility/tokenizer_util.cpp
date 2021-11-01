@@ -20,26 +20,27 @@ public:
   }
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-  bool quit = false;
-  while (!quit)
+  sink_adapter   adapter;
+  std::string    file;
+  
+
+  for (int i = 1; i < argc; ++i)
   {
-    std::string file;
-    std::cout << "file: ";
-    std::cin >> file;
-    if (file == "q" || file == "quit")
-      quit = true;
+    if (std::string(argv[i]) == "--nc")
+      adapter.set_ignore_comments(false);
     else
     {
+      file = argv[i];
       std::ifstream     ff(file);
       std::stringstream buffer;
       buffer << ff.rdbuf();
-      std::string    content = buffer.str();
-      sink_adapter   adapter;
+      std::string content = buffer.str();
       ppr::tokenizer ctx(content, adapter);
       ctx.print_tokens();
     }
   }
+  
   return 0;
 }

@@ -9,269 +9,166 @@ namespace ppr
 
 struct eval_type
 {
-  std::tuple<std::uint64_t, std::int64_t, double, std::uint8_t> value;
+  std::int64_t value       = 0;
+  bool         null_type   = false;
+  bool         is_unsigned = false;
 
-  eval_type()                 = default;
   eval_type(eval_type const&) = default;
   eval_type(eval_type&&)      = default;
   eval_type& operator=(eval_type const&) = default;
   eval_type& operator=(eval_type&&) = default;
 
-  eval_type(std::uint64_t v) : value((std::uint64_t)v, (std::int64_t)v, (double)v, 0) {}
-  eval_type(std::int64_t v) : value((std::uint64_t)v, (std::int64_t)v, (double)v, 1) {}
-  eval_type(double v) : value((std::uint64_t)v, (std::int64_t)v, (double)v, 2) {}
-  eval_type(std::uint64_t a, std::int64_t b, double c, std::uint8_t d) : value(a, b, c, d) {}
+  eval_type(bool v) : value(v), is_unsigned(true) {}
+  eval_type(std::int64_t v) : value(v) {}
+  eval_type(std::uint64_t v) : value(v), is_unsigned(true) {}
+  eval_type() : null_type(true) {}
+
+  std::uint64_t uval() const
+  {
+    return static_cast<std::uint64_t>(value);
+  }
+
+  std::int64_t val() const
+  {
+    return static_cast<std::int64_t>(value);
+  }
+
+#define PPR_BINARY_OP(op)                                                                                              \
+  return null_type || o.null_type                                                                                      \
+           ? eval_type{}                                                                                               \
+           : (is_unsigned || o.is_unsigned ? eval_type{uval() op o.uval()} : eval_type{val() op o.val()})
+
+#define PPR_BINARY_OP_U(op)                                                                                            \
+  return null_type || o.null_type ? eval_type{} : eval_type                                                            \
+  {                                                                                                                    \
+    uval() op o.uval()                                                                                                 \
+  }
+
+#define PPR_BINARY_OP_S(op)                                                                                            \
+  return null_type || o.null_type ? eval_type{} : eval_type                                                            \
+  {                                                                                                                    \
+    val() op o.val()                                                                                                   \
+  }
+
+#define PPR_UNARY_OP(op) return null_type ? eval_type{} : (is_unsigned ? eval_type{op uval()} : eval_type{op val()})
+
+#define PPR_UNARY_OP_U(op)                                                                                             \
+  return null_type ? eval_type{} : eval_type                                                                           \
+  {                                                                                                                    \
+    op uval()                                                                                                          \
+  }
+#define PPR_UNARY_OP_S(op)                                                                                             \
+  return null_type ? eval_type{} : eval_type                                                                           \
+  {                                                                                                                    \
+    op val()                                                                                                           \
+  }
 
   // clang-format off
   inline eval_type operator+(eval_type const& o) const
   {
-    return
-    eval_type{
-      std::get<0>(value) + std::get<0>(o.value), 
-      std::get<1>(value) + std::get<1>(o.value),
-      std::get<2>(value) + std::get<2>(o.value), 
-      std::max(std::get<3>(value), std::get<3>(o.value))
-    };
+    PPR_BINARY_OP(+);
   }
-
 
   inline eval_type operator-(eval_type const& o) const
   {
-    return
-    eval_type{
-      std::get<0>(value) - std::get<0>(o.value), 
-      std::get<1>(value) - std::get<1>(o.value),
-      std::get<2>(value) - std::get<2>(o.value), 
-      std::max(std::get<3>(value), std::get<3>(o.value))
-    };
+    PPR_BINARY_OP(-);
   }
 
   inline eval_type operator*(eval_type const& o) const
   {
-    return
-    eval_type{
-      std::get<0>(value) * std::get<0>(o.value), 
-      std::get<1>(value) * std::get<1>(o.value),
-      std::get<2>(value) * std::get<2>(o.value), 
-      std::max(std::get<3>(value), std::get<3>(o.value))
-    };
+    PPR_BINARY_OP(*);
   }
 
   inline eval_type operator/(eval_type const& o) const
   {
-    return
-    eval_type{
-      std::get<0>(value) / std::get<0>(o.value), 
-      std::get<1>(value) / std::get<1>(o.value),
-      std::get<2>(value) / std::get<2>(o.value), 
-      std::max(std::get<3>(value), std::get<3>(o.value))
-    };
+    PPR_BINARY_OP(/);
   }
 
   inline eval_type operator<<(eval_type const& o) const
   {
-    auto v = std::get<0>(value) << std::get<0>(o.value);
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP_U(<<);
   }
 
   inline eval_type operator>>(eval_type const& o) const
   {
-    auto v = std::get<0>(value) >> std::get<0>(o.value);
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP_U(>>);
   }
 
   inline eval_type operator<=(eval_type const& o) const
   {
-    std::uint64_t v = std::get<2>(value) <= std::get<2>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(<=);
   }
 
   inline eval_type operator>=(eval_type const& o) const
   {
-    std::uint64_t v = std::get<2>(value) >= std::get<2>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(>=);
   }
 
   inline eval_type operator==(eval_type const& o) const
   {
-    std::uint64_t v;
-    if (std::get<3>(value) == 2 || std::get<3>(o.value) == 2)
-      v = std::get<2>(value) == std::get<2>(o.value) ? 1 : 0;
-    else
-      v = std::get<0>(value) == std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(==);
   }
 
   inline eval_type operator!=(eval_type const& o) const
   {
-    std::uint64_t v;
-    if (std::get<3>(value) == 2 || std::get<3>(o.value) == 2)
-      v = std::get<2>(value) != std::get<2>(o.value) ? 1 : 0;
-    else
-      v = std::get<0>(value) != std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(!=);
   }
 
   inline eval_type operator&&(eval_type const& o) const
   {
-    std::uint64_t v = std::get<0>(value) && std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    return uval() && o.uval();
   }
 
   inline eval_type operator||(eval_type const& o) const
   {
-    std::uint64_t v = std::get<0>(value) || std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    return uval() || o.uval();
   }
   
   inline eval_type operator<(eval_type const& o) const
   {
-    std::uint64_t v = std::get<2>(value) < std::get<2>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(<);
   }
 
   inline eval_type operator>(eval_type const& o) const
   {
-    std::uint64_t v = std::get<2>(value) > std::get<2>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP(>);
   }
 
   
   inline eval_type operator!() const
   {
-    std::uint64_t v = !std::get<0>(value);
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_UNARY_OP(!);
   }
     
   inline eval_type operator&(eval_type const& o) const
   {
-    std::uint64_t v = std::get<0>(value) & std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    return uval() & o.uval();
   }
 
     
   inline eval_type operator|(eval_type const& o) const
   {
-    std::uint64_t v = std::get<0>(value) | std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    return uval() | o.uval();
   }
 
   inline eval_type operator^(eval_type const& o) const
   {
-    std::uint64_t v = std::get<0>(value) ^ std::get<0>(o.value) ? 1 : 0;
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_BINARY_OP_U(^);
   }
 
   inline operator bool() const
   {
-    return std::get<0>(value) || std::get<1>(value) || (std::get<2>(value) != 0.0);
+    return uval() != 0;
   }
 
-  friend inline eval_type operator ~(eval_type const& o)
+  inline eval_type operator ~() const
   {
-    std::uint64_t v = ~std::get<0>(o.value);
-    return
-    eval_type{
-      v, 
-      (std::int64_t)v,
-      (double)v, 
-      0
-    };
+    PPR_UNARY_OP_U(~);
   }
 
-  friend inline eval_type operator -(eval_type const& o)
+  inline eval_type operator -() const
   {
-    return
-    eval_type{
-      -std::get<0>(o.value), 
-      -std::get<1>(o.value),
-      -std::get<2>(o.value), 
-      std::get<3>(o.value)
-    };
+    PPR_UNARY_OP_S(-);
   }
   // clang-format on
 };

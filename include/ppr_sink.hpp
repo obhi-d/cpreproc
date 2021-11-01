@@ -14,6 +14,11 @@ public:
   virtual void error(std::string_view, std::string_view, ppr::token, ppr::loc) = 0;
   virtual void handle(token const& t, std::string_view data)                   = 0;
 
+  void set_ignore_comments(bool i)
+  {
+    ignore_comments = i;
+  }
+
 private:
   friend class transform;
   void filter(token const& t, transform const&);

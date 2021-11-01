@@ -7,7 +7,7 @@ namespace ppr
 
 void sink::filter(token const& t, transform const& tf) 
 {
-  char op[3] = {};
+  char op[2] = {};
   switch (t.type)
   {
   case token_type::ty_sl_comment:
@@ -17,14 +17,13 @@ void sink::filter(token const& t, transform const& tf)
       handle(t, tf.value(t));
     break;
   case token_type::ty_operator:
-    op[0] = t.op[0];
-    op[1] = t.op[1];
-    handle(t, std::string_view(op, op[1]==0 ? 1 : 2));
+    op[0] = t.op;
+    handle(t, std::string_view(op, 1));
     break;
   case token_type::ty_braces:
     [[fallthrough]];
   case token_type::ty_bracket:
-    op[0] = t.op[0];
+    op[0] = t.op;
     handle(t, std::string_view(op, 1));
     break;
   case token_type::ty_eof:
@@ -32,7 +31,11 @@ void sink::filter(token const& t, transform const& tf)
   case token_type::ty_false:
     handle(t, std::string_view("0", 1));
     break;
+  case token_type::ty_operator2:
+    [[fallthrough]];
   case token_type::ty_string:
+    [[fallthrough]];
+  case token_type::ty_sqstring:
     [[fallthrough]];
   case token_type::ty_real_number:
     [[fallthrough]];
@@ -41,6 +44,8 @@ void sink::filter(token const& t, transform const& tf)
   case token_type::ty_keyword_ident:
     [[fallthrough]];
   case token_type::ty_integer:
+    [[fallthrough]];
+  case token_type::ty_oct_integer:
     [[fallthrough]];
   case token_type::ty_hex_integer:
     handle(t, tf.value(t));

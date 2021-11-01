@@ -3,7 +3,6 @@
 #pragma once
 
 #include <ppr_common.hpp>
-#include <ppr_eval_type.hpp>
 #include <ppr_tokenizer.hpp>
 #include <ppr_sink.hpp>
 
@@ -37,8 +36,16 @@ public:
     ignore_disabled = ig;
   }
 
+  void push_error(std::string_view s, token const& t);
+  void push_error(std::string_view s, std::string_view t, loc const& l);
+
 private:
-  token is_defined(tokenizer& tk)
+  static inline bool is_token_paste(token const& t) 
+  {
+    return t.type == ppr::token_type::ty_operator2 && t.op2 == operator2_type::op_tokpaste;
+  }
+
+  bool is_defined(tokenizer& tk)
   {
     bool  unexpected = false;
     auto  tok        = tk.get();
@@ -47,7 +54,7 @@ private:
     {
       test = tok;
     }
-    else if (tok.type == token_type::ty_bracket && tok.op[0] == '(')
+    else if (tok.type == token_type::ty_bracket && tok.op == '(')
     {
       tok = tk.get();
 
@@ -55,7 +62,7 @@ private:
       {
         test = tok;
         tok  = tk.get();
-        if (tok.type != token_type::ty_bracket || tok.op[0] != ')')
+        if (tok.type != token_type::ty_bracket || tok.op != ')')
           unexpected = true;
       }
       else
@@ -67,13 +74,12 @@ private:
       unexpected = true;
     if (unexpected)
     {
-      push_error("unexpected token", tok, tk.get_loc());
-      return {};
+      push_error("unexpected token", tok);
+      return false;
     }
     else
     {
-      test.type = (macros.find(value(test)) != macros.end()) ? token_type::ty_true : token_type::ty_false;
-      return test;
+      return (macros.find(value(test)) != macros.end());
     }
   }
 
@@ -108,8 +114,6 @@ private:
 
   bool eval(tokenizer&);
   bool eval(ppr::live_eval& tk);
-  void push_error(std::string_view s, token const& t, loc const& l);
-  void push_error(std::string_view s, std::string_view t, loc const& l);
   
   void undefine(tokenizer&);
 
@@ -151,9 +155,9 @@ struct live_eval
     return tr.err_bit;
   }
 
-  void set_result(ppr::eval_type val)
+  void set_result(bool val)
   {
-    result = (bool)val;
+    result = val;
   }
 
   void push_error(ppr::span s, std::string_view err)

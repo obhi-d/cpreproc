@@ -38,12 +38,14 @@ void  pprtok_free    (void* ptr, void* yyscanner);
 
 blank		           [ \t]*
 ident		           [a-zA-Z_][a-zA-Z0-9_]*
-integer            [+-]?[0-9]+
+integer            [+-]?[1-9]+[0-9]*
+oct                [0][0-9]*
+zero               "0"
 hex                [0][xX][0-9A-F]+ 
+intsuffix          [uU]?[lL]?("ll"|"LL")?
 decimal            [0-9]*"."[0-9]*
 real               {decimal}([eE][+-]?{integer})?
-op2                "++"|"--"|"||"|"&&"|"<<"|">>"|"=="|"!="|"<="|">="|"->"|"::"
-op                 [\+\-\*\/\<\>\!\&\|\~\^\?\:\;\,\.\=\[\]]
+op                 [\+\-\*\/\<\>\!\&\|\~\^\?\:\;\,\.\=\[\]\'\\\#]
 brace              [\{\}]
 bracket            [\(\)]
 
@@ -59,7 +61,7 @@ bracket            [\(\)]
 ^{blank}\#                 {
                              ctx.whitespace(yyleng - 1);
                              BEGIN(pprdirective);
-                             return ctx.make_op({'#', 0}, 1);
+                             return ctx.make_op('#', 1);
                            }
 
 {blank}                    {
@@ -70,24 +72,80 @@ bracket            [\(\)]
                              return ctx.make_ident(yyleng);
                            }
 
-{integer}                  {
+{zero}                     {
+                             return ctx.make_integer(yyleng);
+                           }
+                           
+{integer}{intsuffix}       {
                              return ctx.make_integer(yyleng);
                            }
 
-{hex}                      {
+{hex}{intsuffix}           {
                              return ctx.make_hex_integer(yyleng);
+                           }
+
+{oct}{intsuffix}           {
+                             return ctx.make_oct_integer(yyleng);
                            }
 
 {real}                     {
                              return ctx.make_real_number(yyleng);
                            }
 
-{op2}                      {
-                             return ctx.make_op({yytext[0], yytext[1]}, 2);
+"++"                       {
+                             return ctx.make_op(ppr::operator2_type::op_plusplus, 2);
+                           }
+
+"--"                       {
+                             return ctx.make_op(ppr::operator2_type::op_minusminus, 2);
+                           }
+
+"||"                       {
+                             return ctx.make_op(ppr::operator2_type::op_or, 2);
+                           }
+
+"&&"                       {
+                             return ctx.make_op(ppr::operator2_type::op_and, 2);
+                           }
+
+"<<"                       {
+                             return ctx.make_op(ppr::operator2_type::op_lshift, 2);
+                           }
+
+">>"                       {
+                             return ctx.make_op(ppr::operator2_type::op_rshift, 2);
+                           }
+
+"=="                       {
+                             return ctx.make_op(ppr::operator2_type::op_equals, 2);
+                           }
+
+"!="                       {
+                             return ctx.make_op(ppr::operator2_type::op_nequals, 2);
+                           }
+
+"<="                       {
+                             return ctx.make_op(ppr::operator2_type::op_lequal, 2);
+                           }
+
+">="                       {
+                             return ctx.make_op(ppr::operator2_type::op_gequal, 2);
+                           }
+
+"->"                       {
+                             return ctx.make_op(ppr::operator2_type::op_accessor, 2);
+                           }
+
+"::"                       {
+                             return ctx.make_op(ppr::operator2_type::op_scope, 2);
+                           }
+
+"##"                       {
+                             return ctx.make_op(ppr::operator2_type::op_tokpaste, 2);
                            }
 
 "/*"                       {
-                             ctx.start_read_len();
+                             ctx.start_read_len(yyleng);
                              BEGIN(pprcomment);
                            }
 
@@ -96,7 +154,7 @@ bracket            [\(\)]
                            }
 
 {op}                       {
-                             return ctx.make_op({yytext[0], 0}, 1);
+                             return ctx.make_op(yytext[0], 1);
                            }
 
 {brace}                    {
@@ -109,6 +167,10 @@ bracket            [\(\)]
 
 \"(\\.|[^"\\])*\"          {
                              return ctx.make_string(yyleng);
+                           }
+
+\'(\\.|[^'\\])*\'          {
+                             return ctx.make_squote_string(yyleng);
                            }
 
 \\\n                       {
