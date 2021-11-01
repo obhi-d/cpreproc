@@ -16,13 +16,13 @@ set(PPR_TARGET_NAME               ${PROJECT_NAME})
 set(PPR_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_CXX_STANDARD 20)
 
-#add_custom_command( 
-#	OUTPUT 
-#		"${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp" 
-#	 COMMAND ${PPR_BISON} -o ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp --no-lines ${PROJECT_SOURCE_DIR}/src/ppr_parser.yy
-#	 DEPENDS 
-#		"${PROJECT_SOURCE_DIR}/src/ppr_parser.yy"
-# )
+add_custom_command( 
+	OUTPUT 
+		"${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp" 
+	 COMMAND ${PPR_BISON} -o ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp --no-lines ${PROJECT_SOURCE_DIR}/src/ppr_eval.yy
+	 DEPENDS 
+		"${PROJECT_SOURCE_DIR}/src/ppr_eval.yy"
+ )
 
 add_custom_command( 
 	OUTPUT 
@@ -30,11 +30,10 @@ add_custom_command(
 	 COMMAND ${PPR_FLEX} -o ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp -L "${PROJECT_SOURCE_DIR}/src/ppr_tokenizer.l"
 	 DEPENDS 
 		"${PROJECT_SOURCE_DIR}/src/ppr_tokenizer.l"
-		#"${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp"
     )
 add_custom_target(
   ${PPR_TARGET_NAME}.PreBuild DEPENDS
-  #${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
 )
 ##
@@ -44,15 +43,18 @@ message("Target name: ${PPR_TARGET_NAME}")
 
 if (PPR_BUILD_STATIC)
   add_library(${PPR_TARGET_NAME} STATIC
-    "src/ppr_context.cpp"
     ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
-    #${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
-  )
+    ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
+   "src/ppr_tokenizer.cpp"
+   "src/ppr_macroctx.cpp" 
+   "src/ppr_transform.cpp")
 else(PPR_BUILD_STATIC)
   add_library(${PPR_TARGET_NAME} SHARED 
-    ${PROJECT_SOURCE_DIR}/src/ppr_context.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
+   ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
+   ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
+   "src/ppr_tokenizer.cpp"
+   "src/ppr_macroctx.cpp" 
+   "src/ppr_transform.cpp"
   )
   target_compile_definitions(${PPR_TARGET_NAME} PUBLIC PPR_DYN_LIB_)
 endif(PPR_BUILD_STATIC)
@@ -98,6 +100,13 @@ add_executable(
   ${PROJECT_SOURCE_DIR}/utility/tokenizer_util.cpp
 )
 target_link_libraries(tokenizer_util PRIVATE ${PPR_TARGET_NAME})
+
+add_executable(
+  transform_util
+  ${PROJECT_SOURCE_DIR}/utility/transform_util.cpp
+)
+target_link_libraries(transform_util PRIVATE ${PPR_TARGET_NAME})
+
 # INSTALL
 
 install(TARGETS ${PROJECT_NAME}

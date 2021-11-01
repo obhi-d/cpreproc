@@ -1,7 +1,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <ppr_tokenizer.hpp>
+#include <ppr_transform.hpp>
 #include <sstream>
 #include <string>
 
@@ -25,8 +25,10 @@ int main()
       {
         std::cerr << "error : " << s << " - " << e << "l(" << l.line << ":" << l.column << ")" << std::endl;
       };
-      ppr::tokenizer ctx(content, lambda);
-      ctx.print_tokens();
+      ppr::transform ctx(lambda);
+      ctx.push_source(content, [](std::string_view s) {
+                        std::cout << s;
+        });
     }
   }
   return 0;

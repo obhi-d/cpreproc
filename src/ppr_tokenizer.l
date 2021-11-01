@@ -9,11 +9,11 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <ppr_context.hpp>
+#include <ppr_tokenizer.hpp>
 
 #define YY_READ_BUF_SIZE 512
 #define YY_NO_UNISTD_H
-#define YY_EXTRA_TYPE ppr::context*
+#define YY_EXTRA_TYPE ppr::tokenizer*
 #define YY_INPUT(buf,result,max_size)       \
 	result = yyextra->read(buf, max_size);	\
 
@@ -28,7 +28,7 @@ void  pprtok_free    (void* ptr, void* yyscanner);
 #  define YY_NULLPTR nullptr
 #endif
 
-#define YY_DECL extern ppr::token ppr_tokenize(ppr::context& ctx, void* yyscanner)
+#define YY_DECL extern ppr::token ppr_tokenize(ppr::tokenizer& ctx, void* yyscanner)
 
 %}
 
@@ -112,16 +112,13 @@ bracket            [\(\)]
                            }
 
 \\\n                       {
+                             ctx.skip_commit(2);
                              ctx.lines(1);
                            }
 
 \n                         {
                              ctx.lines(1);
                              return ctx.make_newline();
-                           }
-
-{integer}{ident}           {
-                             ctx.push_error("invalid token", std::string_view(yytext, yyleng));
                            }
 }
 
@@ -150,7 +147,7 @@ bracket            [\(\)]
 <pprdirective>{
 
 {blank}                    {
-                             ctx.whitespace(yyleng - 6);
+                             ctx.whitespace(yyleng);
                            }
 
 "define"                   {
@@ -199,14 +196,14 @@ bracket            [\(\)]
 namespace ppr
 {
 
-void context::begin_scan() 
+void tokenizer::begin_scan() 
 {
   pprtok_lex_init_extra(this, &token_scanner);
-  pprtok_set_debug(true, token_scanner);
+  // pprtok_set_debug(true, token_scanner);
   pos = 0;
 }
 
-void context::end_scan() 
+void tokenizer::end_scan() 
 {
   pprtok_lex_destroy(token_scanner);
   token_scanner = nullptr;

@@ -13,21 +13,32 @@
 namespace ppr
 {
 
-class PPR_API context
+using error_reporter = std::function<void(std::string_view, std::string_view, ppr::token, ppr::loc)>;
+
+class PPR_API tokenizer
 {
 public:
-  context(std::string_view ss) : content(ss) {}
+  tokenizer(std::string_view ss, error_reporter& r) : reporter(r), content(ss)
+  {
+    begin_scan();
+  }
+
+  ~tokenizer()
+  {
+    end_scan();
+  }
 
   inline token make_op(operator_type type, int len)
   {
     token current;
 
-    current.type        = token_type::ty_operator;
-    current.whitespaces = whitespaces;
-    current.op          = type;
     current.start       = pos_commit;
     current.length      = len;
-
+    current.pos         = location;
+    current.whitespaces = static_cast<std::int16_t>(whitespaces);
+    current.op          = type;
+    current.type        = token_type::ty_operator;
+    
     pos_commit += len;
     whitespaces = 0;
     return current;
@@ -37,11 +48,12 @@ public:
   {
     token current;
 
-    current.type        = token_type::ty_operator;
-    current.whitespaces = whitespaces;
-    current.pp_type     = type;
     current.start       = pos_commit;
     current.length      = len;
+    current.pos         = location;
+    current.whitespaces = static_cast<std::int16_t>(whitespaces);
+    current.pp_type     = type;
+    current.type        = token_type::ty_preprocessor;
 
     pos_commit += len;
     whitespaces = 0;
@@ -52,10 +64,11 @@ public:
   {
     token current;
 
-    current.type        = type;
-    current.whitespaces = whitespaces;
     current.start       = pos_commit;
     current.length      = len;
+    current.pos         = location;
+    current.whitespaces = static_cast<std::int16_t>(whitespaces);
+    current.type        = type;
 
     pos_commit += len;
     whitespaces = 0;
@@ -116,6 +129,11 @@ public:
     return make_token(token_type::ty_string, len);
   }
 
+  inline void skip_commit(int len) 
+  {
+    pos_commit += len;
+  }
+
   int read(char* data, int size)
   {
     auto min = std::min<std::int32_t>(static_cast<std::int32_t>(content.size() - pos), size);
@@ -164,6 +182,7 @@ public:
   }
 
   void push_error(std::string_view error);
+  
   void push_error(std::string_view error, std::string_view token);
 
   inline void columns(int len)
@@ -187,20 +206,37 @@ public:
 
   void print_tokens();
 
+  token get();
+
   void end() {}
 
-  void tokenize(std::function<void(ppr::token)>&&);
+  template <typename Lambda>
+  void for_each(Lambda&& f)
+  {
+    while (true)
+    {
+      auto tok = get();
+      f(tok);
+      if (tok.type == ppr::token_type::ty_eof)
+        break;
+    }
+  }
+
+  token peek();
 
  private:
 
+  error_reporter&    reporter;
   loc                location;
   int                whitespaces = 0;
-  
+  token              lookahead;
+
   std::string_view content;
   std::int32_t     pos         = 0;
   std::int32_t     pos_commit  = 0;
   std::int32_t     len_reading = 0;
-  std::uint32_t    flags       = 0;
+  bool               ahead       = false;
+  
 
   void*            token_scanner = nullptr;
 };

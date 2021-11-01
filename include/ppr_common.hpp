@@ -4,6 +4,8 @@
 #include <string>
 #include <string_view>
 #include <cassert>
+#include <vector>
+#include <functional>
 
 #ifdef PPR_DYN_LIB_
 #if defined _WIN32 || defined __CYGWIN__
@@ -33,6 +35,13 @@
 #define PPR_API
 #endif
 
+#ifdef PPR_SMALL_VECTOR
+template <typename T, unsigned N>
+using vector = PPR_SMALL_VECTOR<T, N>;
+#else
+template <typename T, unsigned N>
+using vector = std::vector<T>;
+#endif
 
 namespace ppr
 {
