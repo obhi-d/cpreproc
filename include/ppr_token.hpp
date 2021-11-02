@@ -35,6 +35,7 @@ enum class preprocessor_type : std::uint8_t
   pp_define,
   pp_if,
   pp_ifdef,
+  pp_ifndef,
   pp_else,
   pp_elif,
   pp_endif,
@@ -72,6 +73,9 @@ struct token
   ppr::loc     pos         = {};
   std::int16_t source_id   = 0;
   std::int16_t whitespaces = 0;
+  #ifndef NDEBUG
+  std::string_view sym;
+  #endif
   union
   {
     operator_type     op; // operator type

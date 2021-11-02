@@ -7,12 +7,14 @@ class transform;
 class PPR_API sink
 {
 public:
+  using symvalue = std::pair<std::string_view, std::string_view>;
+
   sink(int max_consequitive_empty_lines = 1, bool ignore_all_comments = true)
       : max_consequtive_newlines(max_consequitive_empty_lines), ignore_comments(ignore_all_comments)
   {}
 
   virtual void error(std::string_view, std::string_view, ppr::token, ppr::loc) = 0;
-  virtual void handle(token const& t, std::string_view data)                   = 0;
+  virtual void handle(token const& t, symvalue const& data)                    = 0;
 
   void set_ignore_comments(bool i)
   {

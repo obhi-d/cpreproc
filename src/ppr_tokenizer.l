@@ -45,7 +45,7 @@ hex                [0][xX][0-9A-F]+
 intsuffix          [uU]?[lL]?("ll"|"LL")?
 decimal            [0-9]*"."[0-9]*
 real               {decimal}([eE][+-]?{integer})?
-op                 [\+\-\*\/\<\>\!\&\|\~\^\?\:\;\,\.\=\[\]\'\\\#]
+op                 [\+\-\*\/\<\>\!\&\|\~\^\?\:\;\,\.\=\[\]\'\\\#\%]
 brace              [\{\}]
 bracket            [\(\)]
 
@@ -225,6 +225,11 @@ bracket            [\(\)]
 "ifdef"                    {
                              BEGIN(pprcode);
                              return ctx.make_ppr(ppr::preprocessor_type::pp_ifdef, 5);
+                           }
+
+"ifndef"                   {
+                             BEGIN(pprcode);
+                             return ctx.make_ppr(ppr::preprocessor_type::pp_ifndef, 6);
                            }
 
 "else"                     {

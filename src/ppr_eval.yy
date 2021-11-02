@@ -50,6 +50,7 @@ YY_DECL;
 	MINUS     "-"
 	MUL       "*"
 	DIV       "/"
+	MODULO    "%"
 	LESS      "<"
 	GREATER	  ">"
 	NOT       "!"
@@ -93,50 +94,50 @@ line :
 expression : ternary { $$ = $1; }
 
 ternary : or { $$ = $1; }
-				| or COND or COLON or { $$ = $1 ? $3 : $5; }
+				| expression COND ternary COLON ternary { $$ = $1 ? $3 : $5; }
 
 or      : and { $$ = $1; }
-				| and OR and { $$ = $1 || $3; }
+				| or OR and { $$ = $1 || $3; }
 
 and     : bwor { $$ = $1; }
-				| bwor AND bwor { $$ = $1 && $3; }
+				| and AND bwor { $$ = $1 && $3; }
 
 bwor    : bwxor { $$ = $1; }
-				| bwxor BW_OR bwxor { $$ = $1 | $3; }
+				| bwor BW_OR bwxor { $$ = $1 | $3; }
 
 bwxor   : bwand { $$ = $1; }
-				| bwand BW_XOR bwand { $$ = $1 ^ $3; }
+				| bwxor BW_XOR bwand { $$ = $1 ^ $3; }
 
 bwand   : equality { $$ = $1; }
-				| equality BW_AND equality { $$ = $1 & $3; }
+				| bwand BW_AND equality { $$ = $1 & $3; }
 
 equality : comparison { $$ = $1; }
-				 | comparison NEQUALS comparison { $$ = ($1 != $3); }
-				 | comparison EQUALS comparison { $$ = ($1 == $3); }
+				 | equality NEQUALS comparison { $$ = ($1 != $3); }
+				 | equality EQUALS comparison { $$ = ($1 == $3); }
 
 comparison : bwshift { $$ = $1; }
-           | bwshift GREATER bwshift { $$ = $1 > $3; }
-					 | bwshift GREATEREQ bwshift { $$ = $1 >= $3; }
-					 | bwshift LESS bwshift { $$ = $1 > $3; }
-					 | bwshift LESSEQ bwshift { $$ = $1 >= $3; }
+           | comparison GREATER bwshift { $$ = $1 > $3; }
+					 | comparison GREATEREQ bwshift { $$ = $1 >= $3; }
+					 | comparison LESS bwshift { $$ = $1 > $3; }
+					 | comparison LESSEQ bwshift { $$ = $1 >= $3; }
 
 bwshift : term { $$ = $1; }
-				| term LSHIFT term { $$ = $1 << $3; }
-				| term RSHIFT term { $$ = $1 >> $3; }
+				| bwshift LSHIFT term { $$ = $1 << $3; }
+				| bwshift RSHIFT term { $$ = $1 >> $3; }
 
 term : factor { $$ = $1; }
-			| factor ADD factor { $$ = $1 + $3; }
-			| factor MINUS factor { $$ = $1 + $3; }
+			| term ADD factor { $$ = $1 + $3; }
+			| term MINUS factor { $$ = $1 + $3; }
 
 factor : unary { $$ = $1; }
-			| unary MUL unary { $$ = $1 * $3; }
-			| unary DIV unary { $$ = $1 / $3; }
+			| factor MUL unary { $$ = $1 * $3; }
+			| factor DIV unary { $$ = $1 / $3; }
+			| factor MODULO unary  { $$ = $1 % $3; }
 
 unary : MINUS unary { $$ = -$2; }
 			|	NOT unary { $$ = !$2; }
 			|	BW_NOT unary { $$ = ~$2; }
 			| primary
-
 
 primary : INT { $$ = ppr::eval_type{$1}; }
 			| UINT { $$ = ppr::eval_type{$1}; }

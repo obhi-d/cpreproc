@@ -51,6 +51,11 @@ private:
     return t.type == ppr::token_type::ty_operator2 && t.op2 == operator2_type::op_tokpaste;
   }
 
+  bool is_not_defined(tokenizer& tk) 
+  {
+    return !is_defined(tk);
+  }
+
   bool is_defined(tokenizer& tk)
   {
     bool  unexpected = false;
@@ -102,9 +107,20 @@ private:
     ss.filter(t, *this);
   }
 
-  std::string_view value(token const& t) const
+  inline std::string_view value(token const& t) const
   {
-    return std::string_view{sources[t.source_id].data() + t.start, static_cast<std::size_t>(t.length)};
+    return value(t.source_id, t.start, t.length);
+  }
+
+  inline std::string_view value(std::int16_t source_id, std::int32_t start, std::int32_t length) const
+  {
+    return std::string_view{sources[source_id].data() + start, static_cast<std::size_t>(length)};
+  }
+
+  inline auto svalue(token const& t) const
+  {
+    return std::pair<std::string_view, std::string_view>{value(t.source_id, t.start - t.whitespaces, t.whitespaces),
+                                                         value(t.source_id, t.start, t.length)};
   }
 
   struct macro

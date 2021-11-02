@@ -9,7 +9,10 @@ bool transform::recursive_resolve_internal(token const& tok, tokenizer& tk, toke
 {
   switch (tok.type)
   {
-    
+  case token_type::ty_blk_comment:
+    [[fallthrough]];
+  case token_type::ty_sl_comment:
+    break;
   case token_type::ty_newline:
   case token_type::ty_eof:
     return false;
@@ -348,7 +351,7 @@ void transform::push_source(std::string_view source)
     auto tok      = tk.get();
     tok.source_id = source_id;
     bool handled  = false;
-
+    bool flip     = false;
     switch (tok.type)
     {
     case token_type::ty_eof:
@@ -373,11 +376,14 @@ void transform::push_source(std::string_view source)
           handled = true;
         }
         break;
+      case preprocessor_type::pp_ifndef:
+        flip = true;
+        [[fallthrough]];
       case preprocessor_type::pp_ifdef:
         if_depth++;
         if (!section_disabled)
         {
-          section_disabled = !is_defined(tk);
+          section_disabled = flip ? is_defined(tk)  : is_not_defined(tk);
           handled          = true;
         }
         else
@@ -437,7 +443,8 @@ void transform::push_source(std::string_view source)
           handled = true;
         break;
       case preprocessor_type::pp_undef:
-        undefine(tk);
+        if (!section_disabled)
+          undefine(tk);
         break;
       default:
         if (!handled && (!section_disabled || !ignore_disabled))

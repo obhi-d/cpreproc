@@ -9,9 +9,9 @@
 class sink_adapter : public ppr::sink
 {
 public:
-  void handle(ppr::token const& t, std::string_view data) override
+  void handle(ppr::token const& t, symvalue const& data) override
   {
-    std::cout << std::string((std::size_t)t.whitespaces, ' ') << data;
+    std::cout << data.first << data.second;
   }
 
   void error(std::string_view s, std::string_view e, ppr::token t, ppr::loc l) override

@@ -84,6 +84,11 @@ struct eval_type
     PPR_BINARY_OP(/);
   }
 
+  inline eval_type operator%(eval_type const& o) const
+  {
+    PPR_BINARY_OP(%);
+  }
+
   inline eval_type operator<<(eval_type const& o) const
   {
     PPR_BINARY_OP_U(<<);

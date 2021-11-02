@@ -35,6 +35,9 @@ public:
     current.pos         = location;
     current.whitespaces = static_cast<std::int16_t>(whitespaces);
     current.type        = type;
+#ifndef NDEBUG
+    current.sym = content.substr(static_cast<std::size_t>(current.start), static_cast<std::size_t>(current.length));
+#endif
 
     pos_commit += len;
     whitespaces = 0;
