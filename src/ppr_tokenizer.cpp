@@ -41,7 +41,9 @@ void  tokenizer::print_tokens()
   for_each(
     [this](ppr::token t) -> void
     {
-      std::cout << std::string(t.whitespaces, ' ') << std::string_view((std::uint32_t)t.start + content.data(), (std::uint32_t)(t.length))
+        std::cout << std::string(t.value.td.whitespaces, ' ')
+                  << std::string_view((std::uint32_t)t.value.td.start + content.data(),
+                                      (std::uint32_t)(t.value.td.length))
                 ;
     });
   std::cout << std::endl;

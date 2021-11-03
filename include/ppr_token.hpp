@@ -81,18 +81,21 @@ struct rtoken
 
   rtoken() = default;
   rtoken(token_type ttype, std::string_view sv, std::int16_t ws, int r = -1)
-      : type(type), value(sv), whitespaces(whitespaces), replace(r)
+      : type(ttype), value(sv), whitespaces(ws), replace(r), op()
+  {}
+  rtoken(token_type ttype, operator_type optype, std::string_view sv, std::int16_t ws, int r = -1)
+      : type(ttype), value(sv), whitespaces(ws), replace(r), op(optype)
   {}
   rtoken(operator_type op, std::int16_t ws)
-      : type(token_type::ty_operator), op(op), whitespaces(whitespaces), replace(-1)
+      : type(token_type::ty_operator), op(op), whitespaces(ws), replace(-1)
   {}
   rtoken(operator2_type op, std::int16_t ws)
-      : type(token_type::ty_operator2), op2(op), whitespaces(whitespaces), replace(-1)
+      : type(token_type::ty_operator2), op2(op), whitespaces(ws), replace(-1)
   {}
 
   std::string_view sspace() const
   {
-    return std::string_view{value.c_str(), whitespaces};
+    return std::string_view{value.c_str(), static_cast<std::size_t>(whitespaces)};
   }
 
   std::string_view svalue() const

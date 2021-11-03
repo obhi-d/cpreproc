@@ -118,8 +118,8 @@ equality : comparison { $$ = $1; }
 comparison : bwshift { $$ = $1; }
            | comparison GREATER bwshift { $$ = $1 > $3; }
 					 | comparison GREATEREQ bwshift { $$ = $1 >= $3; }
-					 | comparison LESS bwshift { $$ = $1 > $3; }
-					 | comparison LESSEQ bwshift { $$ = $1 >= $3; }
+					 | comparison LESS bwshift { $$ = $1 < $3; }
+					 | comparison LESSEQ bwshift { $$ = $1 <= $3; }
 
 bwshift : term { $$ = $1; }
 				| bwshift LSHIFT term { $$ = $1 << $3; }
@@ -153,7 +153,7 @@ namespace ppr {
 void parser_impl::error(location_type const& l,
 												std::string const & e) 
 {
-  ctx.push_error(l, e);
+  ctx.push_error(e, " bison ", l.begin);
 }
 
 bool transform::eval(ppr::live_eval& eval) 
@@ -173,15 +173,17 @@ ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 	using namespace ppr;
 	if(!ctx.error_bit())
 	{
-		auto tok = ctx.get();
+		auto const& tnp = ctx.get();
+		auto const& tok = tnp.first;
+		auto const pos = tnp.second;
 		switch(tok.type)
 		{
 		case token_type::ty_eof:
-			return ppr::parser_impl::make_END(tok.pos);
+			return ppr::parser_impl::make_END(pos);
 		case token_type::ty_true:
-			return ppr::parser_impl::make_BOOL(true, tok.pos);
+			return ppr::parser_impl::make_BOOL(true, pos);
 		case token_type::ty_false:
-			return ppr::parser_impl::make_BOOL(false, tok.pos);
+			return ppr::parser_impl::make_BOOL(false, pos);
 		case token_type::ty_integer:
 		{
 			auto s = ctx.value(tok);
@@ -189,13 +191,13 @@ ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 			{
 				std::int64_t value;
 				std::from_chars(s.data(), s.data() + s.length(), value);
-				return ppr::parser_impl::make_INT(value, tok.pos);
+				return ppr::parser_impl::make_INT(value, pos);
 			}
 			else
 			{
 				std::uint64_t value;
 				std::from_chars(s.data(), s.data() + s.length(), value);
-				return ppr::parser_impl::make_UINT(value, tok.pos);
+				return ppr::parser_impl::make_UINT(value, pos);
 			}
 		}
 		case token_type::ty_hex_integer:
@@ -204,7 +206,7 @@ ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 			
 			std::uint64_t value;
 			std::from_chars(s.data(), s.data() + s.length(), value, 16);
-			return ppr::parser_impl::make_UINT(value, tok.pos);
+			return ppr::parser_impl::make_UINT(value, pos);
 		}
 		case token_type::ty_oct_integer:
 		{
@@ -212,79 +214,79 @@ ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 			
 			std::uint64_t value;
 			std::from_chars(s.data() + 1, s.data() + s.length(), value, 8);
-			return ppr::parser_impl::make_UINT(value, tok.pos);
+			return ppr::parser_impl::make_UINT(value, pos);
 		}
 		case token_type::ty_real_number:
 		{
-			ctx.tr.push_error("float in preprocessor", tok);
-			return ppr::parser_impl::make_END(tok.pos);
+			ctx.push_error("float in preprocessor", ctx.value(tok), pos);
+			return ppr::parser_impl::make_END(pos);
 		}			
 		case token_type::ty_bracket:
 			if (tok.op == '(')
-				return ppr::parser_impl::make_LPAREN(tok.pos);
+				return ppr::parser_impl::make_LPAREN(pos);
 			else
-				return ppr::parser_impl::make_RPAREN(tok.pos);
+				return ppr::parser_impl::make_RPAREN(pos);
 		case token_type::ty_operator:
 			switch(tok.op)
 			{
 			case      '+':
-				return ppr::parser_impl::make_ADD(tok.pos);
+				return ppr::parser_impl::make_ADD(pos);
 			case      '-':
-				return ppr::parser_impl::make_MINUS(tok.pos);
+				return ppr::parser_impl::make_MINUS(pos);
 			case      '*':
-				return ppr::parser_impl::make_MUL(tok.pos);
+				return ppr::parser_impl::make_MUL(pos);
 			case      '/':
-				return ppr::parser_impl::make_DIV(tok.pos);
+				return ppr::parser_impl::make_DIV(pos);
 			case      '<':
-				return ppr::parser_impl::make_LESS(tok.pos);
+				return ppr::parser_impl::make_LESS(pos);
 			case	  '>':
-				return ppr::parser_impl::make_GREATER(tok.pos);
+				return ppr::parser_impl::make_GREATER(pos);
 			case       '!':
-				return ppr::parser_impl::make_NOT(tok.pos);
+				return ppr::parser_impl::make_NOT(pos);
 			case    '&':
-				return ppr::parser_impl::make_BW_AND(tok.pos);
+				return ppr::parser_impl::make_BW_AND(pos);
 			case     '|':
-				return ppr::parser_impl::make_BW_OR(tok.pos);
+				return ppr::parser_impl::make_BW_OR(pos);
 			case    '~':
-				return ppr::parser_impl::make_BW_NOT(tok.pos);
+				return ppr::parser_impl::make_BW_NOT(pos);
 			case    '^':
-				return ppr::parser_impl::make_BW_XOR(tok.pos);
+				return ppr::parser_impl::make_BW_XOR(pos);
 			case    '(':
-				return ppr::parser_impl::make_LPAREN(tok.pos);
+				return ppr::parser_impl::make_LPAREN(pos);
 			case    ')':
-				return ppr::parser_impl::make_RPAREN(tok.pos);
+				return ppr::parser_impl::make_RPAREN(pos);
 			case      '?':
-				return ppr::parser_impl::make_COND(tok.pos);
+				return ppr::parser_impl::make_COND(pos);
 			case     ':':
-				return ppr::parser_impl::make_COLON(tok.pos);
+				return ppr::parser_impl::make_COLON(pos);
 			default:
 				// error
-				return ppr::parser_impl::make_END(tok.pos);
+				return ppr::parser_impl::make_END(pos);
 			}
 		case token_type::ty_operator2:
 			switch(tok.op2)
 			{
 			case operator2_type::op_lshift:
-					return ppr::parser_impl::make_LSHIFT(tok.pos);
+					return ppr::parser_impl::make_LSHIFT(pos);
 			case operator2_type::op_rshift:
-					return ppr::parser_impl::make_RSHIFT(tok.pos);
+					return ppr::parser_impl::make_RSHIFT(pos);
 			case operator2_type::op_lequal:
-					return ppr::parser_impl::make_LESSEQ(tok.pos);
+					return ppr::parser_impl::make_LESSEQ(pos);
 			case operator2_type::op_gequal:
-					return ppr::parser_impl::make_GREATEREQ(tok.pos);
+					return ppr::parser_impl::make_GREATEREQ(pos);
 			case operator2_type::op_equals:
-					return ppr::parser_impl::make_EQUALS(tok.pos);
+					return ppr::parser_impl::make_EQUALS(pos);
 			case operator2_type::op_nequals:
-					return ppr::parser_impl::make_NEQUALS(tok.pos);
+					return ppr::parser_impl::make_NEQUALS(pos);
 			case operator2_type::op_and:
-					return ppr::parser_impl::make_AND(tok.pos);
+					return ppr::parser_impl::make_AND(pos);
 			case operator2_type::op_or:
-					return ppr::parser_impl::make_OR(tok.pos);
+					return ppr::parser_impl::make_OR(pos);
 			default: // error
-				  return ppr::parser_impl::make_END(tok.pos);
+				  return ppr::parser_impl::make_END(pos);
 			}
 		default:
-			return ppr::parser_impl::make_NIL(tok.pos);
+			return ppr::parser_impl::make_NIL(pos);
 		}
 		
 	}

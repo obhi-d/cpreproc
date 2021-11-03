@@ -1,0 +1,13 @@
+
+#define DEFINE2(x, y, z) x ## y
+#define DEFINE3 2
+#define DEFINE4 DEFINE2() * 6
+
+
+#if DEFINE2(4, 4, 4) < 46
+#define DEFINE_A 
+#endif
+
+#ifdef DEFINE_A
+#define DEFINE_B 4
+#endif

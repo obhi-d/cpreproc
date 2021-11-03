@@ -7,10 +7,11 @@ namespace ppr
 
 void sink::filter(token const& t, transform const& tf) 
 {
-  char op[2] = {};
   bool token_ignored = false;
-  switch (t.type)
+  switch (tf.type(t))
   {
+  case token_type::ty_eof:
+    break;
   case token_type::ty_sl_comment:
     [[fallthrough]];
   case token_type::ty_blk_comment:
@@ -20,20 +21,13 @@ void sink::filter(token const& t, transform const& tf)
       token_ignored = true;
     break;
   case token_type::ty_operator:
-    op[0] = t.op;
-    handle(t, tf.svalue(t));
-    break;
+    [[fallthrough]];
   case token_type::ty_braces:
     [[fallthrough]];
   case token_type::ty_bracket:
-    op[0] = t.op;
-    handle(t, tf.svalue(t));
-    break;
-  case token_type::ty_eof:
-    break;
+    [[fallthrough]];
   case token_type::ty_false:
-    handle(t, tf.svalue(t));
-    break;
+    [[fallthrough]];
   case token_type::ty_operator2:
     [[fallthrough]];
   case token_type::ty_string:
@@ -51,6 +45,8 @@ void sink::filter(token const& t, transform const& tf)
   case token_type::ty_oct_integer:
     [[fallthrough]];
   case token_type::ty_hex_integer:
+    [[fallthrough]];
+  case token_type::ty_rtoken:
     handle(t, tf.svalue(t));
     break;
   case token_type::ty_newline:
