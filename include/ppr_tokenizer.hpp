@@ -30,13 +30,14 @@ public:
   {
     token current;
 
-    current.start       = pos_commit;
-    current.length      = len;
-    current.pos         = location;
-    current.whitespaces = static_cast<std::int16_t>(whitespaces);
-    current.type        = type;
+    current.value.td.start       = pos_commit;
+    current.value.td.length      = len;
+    current.value.td.pos         = location;
+    current.value.td.whitespaces = static_cast<std::int16_t>(whitespaces);
+    current.type                 = type;
 #ifndef NDEBUG
-    current.sym = content.substr(static_cast<std::size_t>(current.start), static_cast<std::size_t>(current.length));
+    current.sym = content.substr(static_cast<std::size_t>(current.value.td.start),
+                                 static_cast<std::size_t>(current.value.td.length));
 #endif
 
     pos_commit += len;
@@ -46,22 +47,22 @@ public:
 
   inline token make_op(operator_type type, int len)
   {
-    auto tok = make_token(token_type::ty_operator, len);
-    tok.op   = type;
+    auto tok        = make_token(token_type::ty_operator, len);
+    tok.value.td.op = type;
     return tok;
   }
 
   inline token make_op(operator2_type type, int len)
   {
-    auto tok = make_token(token_type::ty_operator2, len);
-    tok.op2  = type;
+    auto tok         = make_token(token_type::ty_operator2, len);
+    tok.value.td.op2 = type;
     return tok;
   }
 
   inline token make_ppr(preprocessor_type type, int len)
   {
-    auto tok    = make_token(token_type::ty_preprocessor, len);
-    tok.pp_type = type;
+    auto tok             = make_token(token_type::ty_preprocessor, len);
+    tok.value.td.pp_type = type;
     return tok;
   }
 
@@ -79,7 +80,7 @@ public:
   {
     return make_token(token_type::ty_hex_integer, len);
   }
-    
+
   inline token make_oct_integer(int len)
   {
     return make_token(token_type::ty_oct_integer, len);
@@ -93,14 +94,14 @@ public:
   inline token make_braces(char op)
   {
     auto tok = make_token(token_type::ty_braces, 1);
-    tok.op   = op;
+    tok.value.td.op = op;
     return tok;
   }
 
   inline token make_bracket(char op)
   {
     auto tok = make_token(token_type::ty_bracket, 1);
-    tok.op   = op;
+    tok.value.td.op = op;
     return tok;
   }
 
@@ -123,7 +124,7 @@ public:
   {
     return make_token(token_type::ty_string, len);
   }
-  
+
   inline token make_squote_string(int len)
   {
     return make_token(token_type::ty_sqstring, len);

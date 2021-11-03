@@ -27,6 +27,7 @@ enum class token_type : std::int32_t
   ty_sl_comment,
   ty_blk_comment,
   ty_keyword_ident,
+  ty_rtoken,
   ty_eof = -1,
 };
 
@@ -66,33 +67,97 @@ enum class operator2_type : std::uint8_t
   op_tokpaste
 };
 
-struct token
-{   
+struct rtoken
+{
+  int         replace = -1;
+  std::string value;
+  std::int16_t whitespaces = 0;
+  union
+  {
+    operator_type  op; // operator type
+    operator2_type op2;
+  };
+  token_type type = token_type::ty_eof;
+
+  rtoken() = default;
+  rtoken(token_type ttype, std::string_view sv, std::int16_t ws, int r = -1)
+      : type(type), value(sv), whitespaces(whitespaces), replace(r)
+  {}
+  rtoken(operator_type op, std::int16_t ws)
+      : type(token_type::ty_operator), op(op), whitespaces(whitespaces), replace(-1)
+  {}
+  rtoken(operator2_type op, std::int16_t ws)
+      : type(token_type::ty_operator2), op2(op), whitespaces(whitespaces), replace(-1)
+  {}
+
+  std::string_view sspace() const
+  {
+    return std::string_view{value.c_str(), whitespaces};
+  }
+
+  std::string_view svalue() const
+  {
+    return std::string_view{value.c_str() + whitespaces, value.length() - whitespaces};
+  }
+
+  auto op_type() const
+  {
+    return op;
+  }
+
+  auto op2_type() const
+  {
+    return op2;
+  }
+};
+
+using rtoken_ptr = rtoken const*;
+
+struct token_data
+{
   std::int32_t start       = 0;
   std::int32_t length      = 0;
   ppr::loc     pos         = {};
-  std::int16_t source_id   = 0;
   std::int16_t whitespaces = 0;
-  #ifndef NDEBUG
-  std::string_view sym;
-  #endif
   union
   {
     operator_type     op; // operator type
     operator2_type    op2;
     preprocessor_type pp_type;
   };
+};
+
+struct token
+{ 
+  union content
+  {
+    token_data td;
+    rtoken_ptr rt;
+
+    content() : td{} {}
+    content(rtoken_ptr v) : rt{v} {}
+  };
+
+  content    value;
   token_type type = token_type::ty_eof;
+#ifndef NDEBUG
+  std::string_view sym;
+#endif
 
   token() = default;
   token(bool b) : type(b ? token_type::ty_true : token_type::ty_false) {}
+  token(rtoken const& rt) : type(token_type::ty_rtoken), value(&rt) {}
+
   
-  inline bool similar(token const& other) const 
+  auto op_type() const
   {
-    return type == other.type && length == other.length;
+    return value.td.op;
   }
 
-
+  auto op2_type() const
+  {
+    return value.td.op2;
+  }
 };
 
 } // namespace ppr
