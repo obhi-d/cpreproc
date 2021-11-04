@@ -101,7 +101,7 @@ You can live evaluate an #if condition using the transform object.
 - Optionally can return disabled tokens (with a boolean set on the token object : was_disabled)
 - Has API to live evalute an #if (condition) 
 
-## What it does not do
+## What it does not
 
 - Care about all valid preprocessor directives : If it encounters an alien directive, it returns the token to the user
 - Analyze code
