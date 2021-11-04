@@ -157,6 +157,5 @@ install(FILES
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.hxx"
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx"
-  "${CMAKE_CURRENT_BINARY_DIR}/detail/stack.hh"
   DESTINATION include/detail)
 
