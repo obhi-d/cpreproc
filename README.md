@@ -2,11 +2,11 @@
 Preprocessor for C like language.
 
 This project is under active development and is not matured yet. 
-The project is header only.
 
 # Bulding
 
-The project is header only. From the source directory run:
+The project is header only. 
+From the source directory run:
 
 
 > mkdir ../build &&  cd ../build
@@ -18,6 +18,15 @@ If you have bison/flex installed, you can generate the parsers from sources if :
 > PPR_BISON:STRING - path to bison executable
 > PPR_FLEX:STRING - path to flex executable
 > PPR_USE_PRE_GENERATED_PARSERS:OFF - set to FALSE to avoid copying the pre-generated code
+
+# Usage
+
+Include ppr.h, in one of your object module, define PPR_IMPLEMENT before including ppr.h.
+
+		#define PPR_IMPLEMENT
+		#include <ppr.h>
+
+This will work even with unity builds. It does not matter if you include ppr.h many times, but you must define PPR_IMPLEMENT once before including ppr.h.
 
 ## What this project does
 

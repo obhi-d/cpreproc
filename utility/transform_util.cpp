@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 
-#define PPR_IMPL
+#define PPR_IMPLEMENT
 #include <ppr.hpp>
 
 class sink_adapter : public ppr::sink

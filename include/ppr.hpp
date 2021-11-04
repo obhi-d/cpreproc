@@ -9,7 +9,7 @@
 #include "ppr_tokenizer.hpp"
 #include "ppr_transform.hpp"
 
-#ifdef PPR_IMPL
+#ifdef PPR_IMPLEMENT
 #include "detail/ppr_sink.hxx"
 #include "detail/ppr_tokenizer.hxx"
 #include "detail/ppr_transform.hxx"
