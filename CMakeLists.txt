@@ -4,7 +4,6 @@ project(ppr VERSION 0.0.1 LANGUAGES CXX)
 
 
 option(PPR_BUILD_TESTS      "Build the unit tests when BUILD_TESTING is enabled." ON)
-option(PPR_BUILD_STATIC     "Build as static lib."                                ON)
 option(PPR_USE_LIBCPP_CLANG "Use libc++ for clang"                                ON)
 set   (PPR_BISON            "bison"                                               CACHE STRING "Bison execuatable")
 set   (PPR_FLEX             "flex"                                                CACHE STRING "Flex executable"  )
@@ -18,48 +17,32 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_custom_command( 
 	OUTPUT 
-		"${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp" 
-	 COMMAND ${PPR_BISON} -o ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp --no-lines ${PROJECT_SOURCE_DIR}/src/ppr_eval.yy
+		"${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" 
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/detail
+	 COMMAND ${PPR_BISON} -o ${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx --no-lines "${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
 	 DEPENDS 
-		"${PROJECT_SOURCE_DIR}/src/ppr_eval.yy"
+		"${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
  )
 
 add_custom_command( 
 	OUTPUT 
-		"${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp" 
-	 COMMAND ${PPR_FLEX} -o ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp -L "${PROJECT_SOURCE_DIR}/src/ppr_tokenizer.l"
+	"${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/detail
+	 COMMAND ${PPR_FLEX} -o ${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx -L "${PROJECT_SOURCE_DIR}/include/detail/ppr_tokenizer.l"
 	 DEPENDS 
-		"${PROJECT_SOURCE_DIR}/src/ppr_tokenizer.l"
+		"${PROJECT_SOURCE_DIR}/include/detail/ppr_tokenizer.l"
     )
 add_custom_target(
   ${PPR_TARGET_NAME}.PreBuild DEPENDS
-  ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" 
 )
 ##
 ## TARGET
 ##
 message("Target name: ${PPR_TARGET_NAME}")
 
-if (PPR_BUILD_STATIC)
-  add_library(${PPR_TARGET_NAME} STATIC
-    ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
-   "src/ppr_tokenizer.cpp"
-    
-   "src/ppr_transform.cpp" "src/ppr_sink.cpp")
-else(PPR_BUILD_STATIC)
-  add_library(${PPR_TARGET_NAME} SHARED 
-   ${CMAKE_CURRENT_BINARY_DIR}/lex.ppr.cpp
-   ${CMAKE_CURRENT_BINARY_DIR}/parse.ppr.cpp
-   "src/ppr_tokenizer.cpp"
-   "src/ppr_macroctx.cpp" 
-   "src/ppr_transform.cpp"
-  )
-  target_compile_definitions(${PPR_TARGET_NAME} PUBLIC PPR_DYN_LIB_)
-endif(PPR_BUILD_STATIC)
-
-target_compile_definitions(${PPR_TARGET_NAME} PRIVATE PPR_EXPORT_)
+add_library(${PPR_TARGET_NAME} INTERFACE)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (PPR_USE_LIBCPP_CLANG)
@@ -68,21 +51,15 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   endif(PPR_USE_LIBCPP_CLANG)
 endif()
 
-
 add_dependencies(${PPR_TARGET_NAME} ${PPR_TARGET_NAME}.PreBuild)
 add_library(${PROJECT_NAME}::${PPR_TARGET_NAME} ALIAS ${PPR_TARGET_NAME})
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 target_include_directories(
     ${PPR_TARGET_NAME}
-    PUBLIC $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
+    INTERFACE $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_include_directories(
-    ${PPR_TARGET_NAME}
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-)
-
-target_compile_features(${PPR_TARGET_NAME} INTERFACE cxx_std_20)
 
 ##
 ## TESTS
@@ -155,3 +132,10 @@ if(DEFINED CMAKE_INSTALL_DATAROOTDIR)
 endif()
 
 install(DIRECTORY include DESTINATION .)
+install(FILES 
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.hxx"
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx"
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/stack.hh"
+  DESTINATION include/detail)
+

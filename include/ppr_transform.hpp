@@ -3,10 +3,11 @@
 #pragma once
 
 #include <list>
-#include <ppr_common.hpp>
-#include <ppr_sink.hpp>
-#include <ppr_tokenizer.hpp>
 #include <tuple>
+#include "ppr_common.hpp"
+#include "ppr_sink.hpp"
+#include "ppr_tokenizer.hpp"
+
 namespace ppr
 {
 

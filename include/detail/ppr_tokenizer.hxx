@@ -1,7 +1,6 @@
 
-#include <ppr_tokenizer.hpp>
-#include <ppr_sink.hpp>
-#include <iostream>
+#include "ppr_tokenizer.hpp"
+#include "ppr_sink.hpp"
 
 extern ppr::token ppr_tokenize(ppr::tokenizer& ctx, void* yyscanner);
 
@@ -46,7 +45,6 @@ void  tokenizer::print_tokens()
                                       (std::uint32_t)(t.value.td.length))
                 ;
     });
-  std::cout << std::endl;
 }
 
 }

@@ -1,3 +1,4 @@
+#pragma once
 
 #include <cstdint>
 #include <functional>
@@ -7,8 +8,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <ppr_loc.hpp>
-#include <ppr_token.hpp>
+#include "ppr_loc.hpp"
+#include "ppr_token.hpp"
 
 namespace ppr
 {

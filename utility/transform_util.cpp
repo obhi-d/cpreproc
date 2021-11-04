@@ -1,10 +1,11 @@
 
 #include <fstream>
 #include <iostream>
-#include <ppr_transform.hpp>
-#include <ppr_sink.hpp>
 #include <sstream>
 #include <string>
+
+#define PPR_IMPL
+#include <ppr.hpp>
 
 class sink_adapter : public ppr::sink
 {

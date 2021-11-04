@@ -2,8 +2,8 @@
 #pragma once
 #include <cstdint>
 #include <array>
-#include <ppr_common.hpp>
-#include <ppr_loc.hpp>
+#include "ppr_common.hpp"
+#include "ppr_loc.hpp"
 
 namespace ppr
 {
@@ -75,7 +75,7 @@ struct rtoken
   std::int16_t whitespaces = 0;
   union
   {
-    operator_type  op; // operator type
+    operator_type  op = 0; // operator type
     operator2_type op2;
   };
   token_type type = token_type::ty_eof;
