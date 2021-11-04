@@ -43,6 +43,11 @@ public:
   void push_error(std::string_view s, token const& t);
   void push_error(std::string_view s, std::string_view t, loc const& l);
 
+  bool error_bit() const
+  {
+    return err_bit;
+  }
+
 private:
 
   void token_paste(rtoken& rt, token const& t);
