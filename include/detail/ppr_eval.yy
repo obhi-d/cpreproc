@@ -10,6 +10,7 @@
 %define parse.assert 
 %define parse.trace 
 %define parse.error verbose
+%require "3.2"
 
 %code requires
 {

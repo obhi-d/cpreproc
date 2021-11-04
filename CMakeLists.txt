@@ -3,10 +3,11 @@ cmake_minimum_required(VERSION 3.1)
 project(ppr VERSION 0.0.1 LANGUAGES CXX)
 
 
-option(PPR_BUILD_TESTS      "Build the unit tests when BUILD_TESTING is enabled." ON)
-option(PPR_USE_LIBCPP_CLANG "Use libc++ for clang"                                ON)
-set   (PPR_BISON            "bison"                                               CACHE STRING "Bison execuatable")
-set   (PPR_FLEX             "flex"                                                CACHE STRING "Flex executable"  )
+option(PPR_BUILD_TESTS               "Build the unit tests when BUILD_TESTING is enabled." ON)
+option(PPR_USE_LIBCPP_CLANG          "Use libc++ for clang"                                ON)
+option(PPR_USE_PRE_GENERATED_PARSERS "Use already generated parsers"                       ON)
+set   (PPR_BISON                     "bison"                                               CACHE STRING "Bison execuatable")
+set   (PPR_FLEX                      "flex"                                                CACHE STRING "Flex executable"  )
 
 ##
 ## CONFIGURATION
@@ -15,11 +16,27 @@ set(PPR_TARGET_NAME               ${PROJECT_NAME})
 set(PPR_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_CXX_STANDARD 20)
 
+if (PPR_USE_PRE_GENERATED_PARSERS)
+
 add_custom_command( 
 	OUTPUT 
 		"${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" 
-   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/detail
-	 COMMAND ${PPR_BISON} -o ${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx --no-lines "${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
+    "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
+
+   COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/detail"
+	 COMMAND ${CMAKE_COMMAND} -E copy  "${PROJECT_SOURCE_DIR}/gen/ppr_eval.cxx" "${PROJECT_SOURCE_DIR}/gen/ppr_eval.hxx" "${PROJECT_SOURCE_DIR}/gen/ppr_tokenizer.cxx" "${CMAKE_CURRENT_BINARY_DIR}/detail"
+	 DEPENDS 
+		"${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
+ )
+
+else(PPR_USE_PRE_GENERATED_PARSERS)
+
+add_custom_command( 
+	OUTPUT 
+		"${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" 
+   COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/detail"
+	 COMMAND ${PPR_BISON} -o "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" --no-lines "${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
+   COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.hxx" "${PROJECT_SOURCE_DIR}/gen"
 	 DEPENDS 
 		"${PROJECT_SOURCE_DIR}/include/detail/ppr_eval.yy"
  )
@@ -27,11 +44,15 @@ add_custom_command(
 add_custom_command( 
 	OUTPUT 
 	"${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
-   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/detail
-	 COMMAND ${PPR_FLEX} -o ${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx -L "${PROJECT_SOURCE_DIR}/include/detail/ppr_tokenizer.l"
+   COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/detail"
+	 COMMAND ${PPR_FLEX} -o "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" -L "${PROJECT_SOURCE_DIR}/include/detail/ppr_tokenizer.l"
+   COMMAND ${CMAKE_COMMAND} -E copy  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" "${PROJECT_SOURCE_DIR}/gen"
 	 DEPENDS 
 		"${PROJECT_SOURCE_DIR}/include/detail/ppr_tokenizer.l"
     )
+
+endif(PPR_USE_PRE_GENERATED_PARSERS)
+
 add_custom_target(
   ${PPR_TARGET_NAME}.PreBuild DEPENDS
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
