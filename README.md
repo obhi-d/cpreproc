@@ -9,15 +9,17 @@ The project is header only.
 From the source directory run:
 
 
-> mkdir ../build &&  cd ../build
-> cmake ../ -G Ninja
-> cmake --build . --target install --config Release
+    mkdir ../build &&  cd ../build
+    cmake ../ -G Ninja
+    cmake --build . --target install --config Release
 
-If you have bison/flex installed, you can generate the parsers from sources if :
-- you set these cmake vars:
-> PPR_BISON:STRING - path to bison executable
-> PPR_FLEX:STRING - path to flex executable
-> PPR_USE_PRE_GENERATED_PARSERS:OFF - set to FALSE to avoid copying the pre-generated code
+If you have bison/flex installed, you can generate the parsers from sources if you set these cmake vars:
+
+| Variable | Description |
+|----------|--------------
+| PPR_BISON:STRING | Path to bison executable |
+| PPR_FLEX:STRING | Path to flex executable | 
+| PPR_USE_PRE_GENERATED_PARSERS:OFF | Set to FALSE to avoid copying the pre-generated code | 
 
 # Usage
 
