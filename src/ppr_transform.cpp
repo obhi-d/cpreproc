@@ -128,7 +128,7 @@ void transform::do_substitutions(param_substitution const& subs, rtoken_cache co
   }
 }
 
-bool transform::is_defined(token_stream& tk)
+std::tuple<token, bool> transform::is_defined(token_stream& tk)
 {
   bool unexpected = false;
   auto tok        = tk.get();
@@ -156,11 +156,11 @@ bool transform::is_defined(token_stream& tk)
   if (unexpected)
   {
     push_error("unexpected token", tok);
-    return false;
+    return std::tuple<token, bool>(test, false);
   }
   else
   {
-    return is_defined(value(test));
+    return std::tuple<token, bool>(test, is_defined(value(test)));
   }
 }
 
@@ -268,7 +268,13 @@ void transform::resolve_tokens(token_stream& tk, bool single)
       if (sv == "defined")
       {
         // asking if this is defined
-        post(is_defined(tk));
+        auto [tok, result] = is_defined(tk);
+        if (!ignore_disabled)
+        {
+          tok.was_disabled = true;
+          post(tok);
+        }
+        post(result);
         if (single)
           return;
       }
@@ -542,14 +548,13 @@ std::string transform::read_define(tokenizer& tk, macro& m)
   return name;
 }
 
-void transform::undefine(tokenizer& tk)
+token transform::undefine(tokenizer& tk)
 {
   token tok = tk.get();
 
   if (tok.type != token_type::ty_keyword_ident)
   {
     push_error("expecting a macro name", tok);
-    return;
   }
   else
   {
@@ -558,12 +563,16 @@ void transform::undefine(tokenizer& tk)
     if (it != macros.end())
       macros.erase(it);
   }
+
+  return tok;
 }
 
-void transform::push_source(std::string_view source)
+void transform::preprocess(std::string_view source)
 {
   tokenizer    tk(source, *last_sink);
   token_stream ts(tk);
+  live_eval    le(*this, ts);
+  le.record_content = !ignore_disabled;
 
   content = source;
 
@@ -603,9 +612,23 @@ void transform::push_source(std::string_view source)
         if_depth++;
         if (!section_disabled)
         {
-          section_disabled = !is_defined(ts);
+          auto [t, res]    =  is_defined(ts);
+          section_disabled = !res;
           if (flip)
             section_disabled = !section_disabled;
+
+#ifndef PPR_DISABLE_RECORD
+          if (!ignore_disabled)
+          {
+            saved.was_disabled = true;
+            tok.was_disabled   = true;
+            t.was_disabled     = true;
+            post_const(saved);
+            post_const(tok);
+            post_const(t);
+          }
+
+#endif
           handled = true;
         }
         else
@@ -617,7 +640,18 @@ void transform::push_source(std::string_view source)
         if_depth++;
         if (!section_disabled)
         {
-          section_disabled = !eval(tk);
+          auto save   = exchange(&le);
+          section_disabled = eval(le);
+          exchange(save);
+#ifndef PPR_DISABLE_RECORD
+          if (le.record_content && section_disabled)
+          {
+            post(saved);
+            post(tok);
+            post(token(le.record));
+          }
+
+#endif
           handled          = true;
         }
         else
@@ -626,22 +660,38 @@ void transform::push_source(std::string_view source)
         }
         break;
       case preprocessor_type::pp_elif:
-        if (section_disabled)
+        if (!disable_depth && section_disabled)
         {
-          if (!disable_depth)
+          auto save        = exchange(&le);
+          section_disabled = !eval(le);
+          exchange(save);
+#ifndef PPR_DISABLE_RECORD
+          if (le.record_content && section_disabled)
           {
-            section_disabled = !eval(tk);
-            handled          = true;
+            post(saved);
+            post(tok);
+            post(token(le.record));
           }
+#endif
+          handled          = true;
         }
         else
+        {
           section_disabled = true;
+        }
         break;
       case preprocessor_type::pp_else:
         if (section_disabled)
         {
           if (!disable_depth)
           {
+#ifndef PPR_DISABLE_RECORD
+            if (!ignore_disabled)
+            {
+              post(saved);
+              post(tok);
+            }
+#endif
             section_disabled = false;
             handled          = true;
           }
@@ -655,6 +705,13 @@ void transform::push_source(std::string_view source)
         {
           if (!disable_depth)
           {
+#ifndef PPR_DISABLE_RECORD
+            if (!ignore_disabled)
+            {
+              post(saved);
+              post(tok);
+            }
+#endif
             section_disabled = false; // unlock
             handled          = true;
           }
@@ -662,21 +719,46 @@ void transform::push_source(std::string_view source)
             disable_depth--;
         }
         else
+        {
+#ifndef PPR_DISABLE_RECORD
+          if (!ignore_disabled)
+          {
+            saved.was_disabled = true;
+            tok.was_disabled   = true;
+            post_const(saved);
+            post_const(tok);
+          }
+#endif
           handled = true;
+        }
         break;
       case preprocessor_type::pp_undef:
         if (!section_disabled)
-          undefine(tk);
-        break;
-      default:
-        if (!handled && (!section_disabled || !ignore_disabled))
-          // #
-          post(saved);
+        {
+          auto t = undefine(tk);
+
+#ifndef PPR_DISABLE_RECORD
+          if (!ignore_disabled)
+          {
+            saved.was_disabled = true;
+            tok.was_disabled   = true;
+            t.was_disabled     = true;
+            post_const(saved);
+            post_const(tok);
+            post_const(t);
+          }
+#endif
+
+          handled = true;
+        }
         break;
       }
 
       if (!handled && (!section_disabled || !ignore_disabled))
+      {
+        post(saved);
         post(tok);
+      }
     }
     break;
     default:
@@ -702,22 +784,13 @@ void transform::push_source(std::string_view source)
   content = {};
 }
 
-bool transform::eval(tokenizer& tk)
-{
-  // parse
-  token_stream ss(tk);
-  live_eval    le(*this, ss);
-  auto         save   = exchange(&le);
-  bool         result = eval(le);
-  cache.clear();
-  exchange(save);
-  return result;
-}
 bool transform::eval(std::string_view sv)
 {
   tokenizer tk(sv, *last_sink);
+  token_stream ts(tk);
+  live_eval    le(*this, ts);
   content     = sv;
-  bool result = eval(tk);
+  bool result = eval(le);
   content     = {};
   return result;
 }

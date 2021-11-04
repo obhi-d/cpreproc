@@ -16,38 +16,12 @@ void sink::filter(token const& t, transform const& tf)
     [[fallthrough]];
   case token_type::ty_blk_comment:
     if (!ignore_comments)
-      handle(t, tf.svalue(t));
+      handle(t, tf.wspace_content_pair(t));
     else
       token_ignored = true;
     break;
-  case token_type::ty_operator:
-    [[fallthrough]];
-  case token_type::ty_braces:
-    [[fallthrough]];
-  case token_type::ty_bracket:
-    [[fallthrough]];
-  case token_type::ty_false:
-    [[fallthrough]];
-  case token_type::ty_operator2:
-    [[fallthrough]];
-  case token_type::ty_string:
-    [[fallthrough]];
-  case token_type::ty_sqstring:
-    [[fallthrough]];
-  case token_type::ty_real_number:
-    [[fallthrough]];
-  case token_type::ty_preprocessor:
-    [[fallthrough]];
-  case token_type::ty_keyword_ident:
-    [[fallthrough]];
-  case token_type::ty_integer:
-    [[fallthrough]];
-  case token_type::ty_oct_integer:
-    [[fallthrough]];
-  case token_type::ty_hex_integer:
-    [[fallthrough]];
-  case token_type::ty_rtoken:
-    handle(t, tf.svalue(t));
+  default:
+    handle(t, tf.wspace_content_pair(t));
     break;
   case token_type::ty_newline:
   {
@@ -60,7 +34,7 @@ void sink::filter(token const& t, transform const& tf)
         allow = false;
     }
     if (allow)
-      handle(t, tf.svalue(t));
+      handle(t, tf.wspace_content_pair(t));
     break;
   }
   }

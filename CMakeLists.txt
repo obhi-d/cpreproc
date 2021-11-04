@@ -90,8 +90,23 @@ target_compile_features(${PPR_TARGET_NAME} INTERFACE cxx_std_20)
 include(CTest) #adds option BUILD_TESTING (default ON)
 
 if(BUILD_TESTING AND PPR_BUILD_TESTS)
-    enable_testing()
-    #add_subdirectory(unit_tests)
+
+  enable_testing()
+  add_executable(
+    unit_test
+    ${PROJECT_SOURCE_DIR}/unit_tests/test.cpp
+  )
+
+  file(GLOB DATA_FILES ${PROJECT_SOURCE_DIR}/unit_tests/datasets/*.txt)
+
+  add_custom_command( 
+	  TARGET unit_test PRE_BUILD 
+	   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/datasets ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/references ${CMAKE_CURRENT_BINARY_DIR}/references 
+     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/output
+      )
+
+  target_link_libraries(unit_test PRIVATE ${PPR_TARGET_NAME})
 endif()
 
 # Utility

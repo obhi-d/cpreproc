@@ -80,12 +80,9 @@ YY_DECL;
 
 %type <ppr::eval_type> expression primary unary factor term bwshift comparison equality bwand bwxor bwor and or ternary 
 
-%start input
+%start line
 
 %%
-
-input :
-	| input line
 
 line :
 	END
@@ -171,7 +168,7 @@ bool transform::eval(ppr::live_eval& eval)
 ppr::parser_impl::symbol_type ppr_lex(ppr::live_eval& ctx)
 {
 	using namespace ppr;
-	if(!ctx.error_bit())
+	if(! (ctx.error_bit() & ctx.has_result()) )
 	{
 		auto const& tnp = ctx.get();
 		auto const& tok = tnp.first;

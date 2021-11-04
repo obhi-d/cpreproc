@@ -1,0 +1,9 @@
+
+#define DEFINE2(x, y, z) x
+#define DEFINE3 2
+#define DEFINE4 DEFINE2() * 6
+
+#define DEFINE_A 
+
+#define DEFINE_B 
+

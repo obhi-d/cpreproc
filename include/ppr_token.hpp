@@ -27,6 +27,7 @@ enum class token_type : std::int32_t
   ty_sl_comment,
   ty_blk_comment,
   ty_keyword_ident,
+  ty_raw,
   ty_rtoken,
   ty_eof = -1,
 };
@@ -136,22 +137,25 @@ struct token
   {
     token_data td;
     rtoken_ptr rt;
+    std::string const* raw;
 
     content() : td{} {}
     content(rtoken_ptr v) : rt{v} {}
+    content(std::string const& r) : raw(&r) {}
   };
 
-  content    value;
-  token_type type = token_type::ty_eof;
 #ifndef NDEBUG
   std::string_view sym;
 #endif
+  content    value;
+  token_type type = token_type::ty_eof;
+  bool       was_disabled = false;
 
   token() = default;
   token(bool b) : type(b ? token_type::ty_true : token_type::ty_false) {}
   token(rtoken const& rt) : type(token_type::ty_rtoken), value(&rt) {}
-
-  
+  token(std::string const& r) : type(token_type::ty_raw), value(r) {}
+    
   auto op_type() const
   {
     return value.td.op;

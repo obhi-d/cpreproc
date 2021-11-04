@@ -1,0 +1,5 @@
+
+#define DEFINE2() 4
+#define DEFINE3 2
+#define DEFINE4 DEFINE2() * 6
+

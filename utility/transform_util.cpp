@@ -11,6 +11,15 @@ class sink_adapter : public ppr::sink
 public:
   void handle(ppr::token const& t, symvalue const& data) override
   {
+    if (t.was_disabled ^ last_disabled)
+    {
+      if (t.was_disabled)
+        std::cout << "/* ";
+      else
+        std::cout << "*/ ";
+      last_disabled = t.was_disabled;
+    }
+
     std::cout << data.first << data.second;
   }
 
@@ -18,6 +27,9 @@ public:
   {
     std::cerr << "error : " << s << " - " << e << "l(" << l.line << ":" << l.column << ")" << std::endl;
   }
+
+private:
+  bool last_disabled = false;
 };
 
 
@@ -50,7 +62,7 @@ int main(int argc, char* argv[])
       std::stringstream buffer;
       buffer << ff.rdbuf();
       std::string    content = buffer.str();
-      ctx.push_source(content);    
+      ctx.preprocess(content);    
     }
   }
   
