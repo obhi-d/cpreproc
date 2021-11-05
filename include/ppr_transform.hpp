@@ -216,15 +216,22 @@ struct live_eval : public sink
   bool        record_content = false;
 #endif
 
+  enum class finish_state : std::uint8_t
+  {
+    none,
+    end_of_seq,
+    result_available
+  };
+
   bool result   = false;
-  bool finished = false;
+  finish_state finished = finish_state::none;
 
   live_eval(transform& r, transform::token_stream& s) : tr(r), ts(s) {}
 
   void reset() 
   {
     result = false;
-    finished = false;
+    finished = finish_state::none;
     saved.clear();
 #ifndef PPR_DISABLE_RECORD
     record.clear();
@@ -247,7 +254,7 @@ struct live_eval : public sink
         tr.resolve_tokens(ts, true);
       }
     }
-    while (!saved.empty());
+    while (finished != finish_state::end_of_seq);
     return empty;
   }
 
@@ -264,12 +271,12 @@ struct live_eval : public sink
   void set_result(bool val)
   {
     result   = val;
-    finished = true;
+    finished = finish_state::result_available;
   }
 
   bool has_result() const
   {
-    return finished;
+    return finished == finish_state::result_available;
   }
 
   void handle(token const& t, symvalue const& data)
@@ -282,11 +289,16 @@ struct live_eval : public sink
     }
 #endif
 
-    if (finished)
+    if (t.was_disabled)
+      return;
+
+    if (finished != finish_state::none)
       return;
     auto ty = tr.from(t);
     if (ty.type != token_type::ty_newline)
       saved.emplace_back(std::move(ty), (t.type != token_type::ty_rtoken) ? t.value.td.pos : loc{});
+    else
+      finished = finish_state::end_of_seq;
   }
   void push_error(std::string_view err, std::string_view tok, loc pos)
   {
