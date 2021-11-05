@@ -787,7 +787,7 @@ bool transform::eval(std::string_view sv)
 {
   tokenizer tk(sv, *last_sink);
   token_stream ts(tk);
-  live_eval    le(*this, ts);
+  live_eval    le(*this, ts, *last_sink);
   content     = sv;
   bool result = eval(le);
   content     = {};
