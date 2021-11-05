@@ -271,7 +271,7 @@ void transform::resolve_tokens(token_stream& tk, bool single)
         if (!ignore_disabled)
         {
           tok.was_disabled = true;
-          post(tok);
+          post_const(tok);
         }
         post(result);
         if (single)
@@ -570,7 +570,7 @@ void transform::preprocess(std::string_view source)
 {
   tokenizer    tk(source, *last_sink);
   token_stream ts(tk);
-  live_eval    le(*this, ts);
+  live_eval    le(*this, ts, *last_sink);
   le.record_content = !ignore_disabled;
 
   content = source;

@@ -210,6 +210,7 @@ struct live_eval : public sink
   std::uint32_t                     i = 0;
   vector<std::pair<rtoken, loc>, 2> saved;
   std::pair<rtoken, loc>            empty;
+  sink&                             chain;
 
 #ifndef PPR_DISABLE_RECORD
   std::string record;
@@ -226,7 +227,7 @@ struct live_eval : public sink
   bool result   = false;
   finish_state finished = finish_state::none;
 
-  live_eval(transform& r, transform::token_stream& s) : tr(r), ts(s) {}
+  live_eval(transform& r, transform::token_stream& s, sink& cchain) : tr(r), ts(s), chain(cchain) {}
 
   void reset() 
   {
@@ -279,7 +280,7 @@ struct live_eval : public sink
     return finished == finish_state::result_available;
   }
 
-  void handle(token const& t, symvalue const& data)
+  void handle(token const& t, symvalue const& data) override
   {
 #ifndef PPR_DISABLE_RECORD
     if (record_content)
@@ -302,8 +303,8 @@ struct live_eval : public sink
   }
   void push_error(std::string_view err, std::string_view tok, loc pos)
   {
-    tr.push_error(err, tok, pos);
+    chain.error(err, tok, ppr::token(), pos);
   }
-  void error(std::string_view, std::string_view, ppr::token, ppr::loc) {}
+  void error(std::string_view, std::string_view, ppr::token, ppr::loc) override {}
 };
 } // namespace ppr
