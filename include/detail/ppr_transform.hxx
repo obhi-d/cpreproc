@@ -319,22 +319,12 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
     switch (type(tok))
     {
     case token_type::ty_eof:
-    {
+    
       tf.push_error("unexpected during macro call", tok);
       return;
-    }
-    break;
-    case token_type::ty_operator:
-    {
-      if (hasop(tok, ','))
-      {
-        substitutions.emplace_back(std::move(local_cache));
-        break;
-      }
-    }
-      [[fallthrough]];
+    
     case token_type::ty_bracket:
-    {
+    
       if (hasop(tok, '('))
       {
         if (!depth++)
@@ -350,7 +340,18 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
           break;
         }
       }
-    }
+    
+      local_cache.push_back(tok);
+      break;
+
+    case token_type::ty_operator:
+
+      if (!depth && hasop(tok, ','))
+      {
+        substitutions.emplace_back(std::move(local_cache));
+        break;
+      }
+
       [[fallthrough]];
     default:
       // if next or previous was/is token paste
