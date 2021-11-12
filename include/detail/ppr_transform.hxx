@@ -319,12 +319,12 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
     switch (type(tok))
     {
     case token_type::ty_eof:
-    
+
       tf.push_error("unexpected during macro call", tok);
       return;
-    
+
     case token_type::ty_bracket:
-    
+
       if (hasop(tok, '('))
       {
         if (!depth++)
@@ -340,7 +340,7 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
           break;
         }
       }
-    
+
       local_cache.push_back(tok);
       break;
 
@@ -417,8 +417,8 @@ void transform::read_macro_fn(token t, tokenizer& tk, macro& m)
     case token_type::ty_keyword_ident:
     {
 
-      auto v  = value(t);
-      auto it = std::find(m.params.begin(), m.params.end(), v);
+      auto v       = value(t);
+      auto it      = std::find(m.params.begin(), m.params.end(), v);
       int  replace = -1;
       if (it != m.params.end())
         replace = static_cast<int>(std::distance(m.params.begin(), it));
@@ -612,7 +612,7 @@ void transform::preprocess(std::string_view source)
         if_depth++;
         if (!section_disabled)
         {
-          auto [t, res]    =  is_defined(ts);
+          auto [t, res]    = is_defined(ts);
           section_disabled = !res;
           if (flip)
             section_disabled = !section_disabled;
@@ -640,7 +640,7 @@ void transform::preprocess(std::string_view source)
         if_depth++;
         if (!section_disabled)
         {
-          auto save   = exchange(&le);
+          auto save        = exchange(&le);
           section_disabled = eval(le);
           exchange(save);
 #ifndef PPR_DISABLE_RECORD
@@ -652,7 +652,7 @@ void transform::preprocess(std::string_view source)
           }
 
 #endif
-          handled          = true;
+          handled = true;
         }
         else
         {
@@ -673,7 +673,7 @@ void transform::preprocess(std::string_view source)
             post(token(le.record));
           }
 #endif
-          handled          = true;
+          handled = true;
         }
         else
         {
@@ -784,13 +784,24 @@ void transform::preprocess(std::string_view source)
   content = {};
 }
 
-bool transform::eval(std::string_view sv)
+bool transform::eval_bool(std::string_view sv)
 {
-  tokenizer tk(sv, *last_sink);
+  tokenizer    tk(sv, *last_sink);
   token_stream ts(tk);
   live_eval    le(*this, ts, *last_sink);
   content     = sv;
-  bool result = eval(le);
+  bool result = (bool)eval(le);
+  content     = {};
+  return result;
+}
+
+std::uint64_t transform::eval_uint(std::string_view sv)
+{
+  tokenizer    tk(sv, *last_sink);
+  token_stream ts(tk);
+  live_eval    le(*this, ts, *last_sink);
+  content     = sv;
+  auto result = eval(le).uval();
   content     = {};
   return result;
 }

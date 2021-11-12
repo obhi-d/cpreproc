@@ -87,7 +87,7 @@ YY_DECL;
 
 line :
 	END
-	| expression END { ctx.set_result((bool)$1); }
+	| expression END { ctx.set_result($1); }
 
 expression : ternary { $$ = $1; }
 
@@ -154,7 +154,7 @@ void parser_impl::error(location_type const& l,
   ctx.push_error(e, " bison ", l.begin);
 }
 
-bool transform::eval(ppr::live_eval& eval) 
+ppr::eval_type transform::eval(ppr::live_eval& eval) 
 {
 	parser_impl parser(eval);
 	//parser.set_debug_level(flags_ & ppr::impl::debug);

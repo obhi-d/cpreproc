@@ -2,15 +2,15 @@
 
 #pragma once
 
-#include <list>
-#include <tuple>
 #include "ppr_common.hpp"
+#include "ppr_eval_type.hpp"
 #include "ppr_sink.hpp"
 #include "ppr_tokenizer.hpp"
+#include <list>
+#include <tuple>
 
 namespace ppr
 {
-
 
 struct live_eval;
 class PPR_API transform
@@ -28,7 +28,8 @@ public:
 
   void preprocess(std::string_view sources);
 
-  bool eval(std::string_view sources);
+  bool eval_bool(std::string_view sources);
+  std::uint64_t  eval_uint(std::string_view sources);
 
   void set_transform_code(bool tc)
   {
@@ -49,7 +50,6 @@ public:
   }
 
 private:
-
   void token_paste(rtoken& rt, token const& t);
   void token_paste(rtoken& rt, rtoken const& t);
 
@@ -143,7 +143,7 @@ private:
     default:
       return spair{content_value(t.value.td.start - t.value.td.whitespaces, t.value.td.whitespaces),
                    content_value(t.value.td.start, t.value.td.length)};
-    }   
+    }
   }
 
   struct macro
@@ -169,9 +169,9 @@ private:
 
   class token_stream;
 
-  bool eval(ppr::live_eval& tk);
+  eval_type eval(ppr::live_eval& tk);
 
-  token undefine(tokenizer&);
+  token                   undefine(tokenizer&);
   std::tuple<token, bool> is_defined(token_stream& tk);
 
   void expand_macro_call(transform& tf, macromap::iterator it, token_stream& tcache);
@@ -189,7 +189,7 @@ private:
   void do_substitutions(param_substitution const& subs, rtoken_cache const& input, rtoken_cache& output);
 
   // temporaries
-  //token_cache      cache;
+  // token_cache      cache;
   std::string_view content;
 
   sink* last_sink;
@@ -205,6 +205,13 @@ private:
 
 struct live_eval : public sink
 {
+  enum class finish_state : std::uint8_t
+  {
+    none,
+    end_of_seq,
+    result_available
+  };
+
   transform&                        tr;
   transform::token_stream&          ts;
   std::uint32_t                     i = 0;
@@ -217,21 +224,14 @@ struct live_eval : public sink
   bool        record_content = false;
 #endif
 
-  enum class finish_state : std::uint8_t
-  {
-    none,
-    end_of_seq,
-    result_available
-  };
-
-  bool result   = false;
+  eval_type    result   = {};
   finish_state finished = finish_state::none;
 
   live_eval(transform& r, transform::token_stream& s, sink& cchain) : tr(r), ts(s), chain(cchain) {}
 
-  void reset() 
+  void reset()
   {
-    result = false;
+    result   = false;
     finished = finish_state::none;
     saved.clear();
 #ifndef PPR_DISABLE_RECORD
@@ -269,7 +269,7 @@ struct live_eval : public sink
     return tr.err_bit;
   }
 
-  void set_result(bool val)
+  void set_result(eval_type val)
   {
     result   = val;
     finished = finish_state::result_available;

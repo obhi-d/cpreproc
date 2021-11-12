@@ -681,7 +681,7 @@ namespace ppr {
           switch (yyn)
             {
   case 3: // line: expression "end of file"
-                         { ctx.set_result((bool)yystack_[1].value.as < ppr::eval_type > ()); }
+                         { ctx.set_result(yystack_[1].value.as < ppr::eval_type > ()); }
     break;
 
   case 4: // expression: ternary
@@ -1366,7 +1366,7 @@ void parser_impl::error(location_type const& l,
   ctx.push_error(e, " bison ", l.begin);
 }
 
-bool transform::eval(ppr::live_eval& eval) 
+ppr::eval_type transform::eval(ppr::live_eval& eval) 
 {
 	parser_impl parser(eval);
 	//parser.set_debug_level(flags_ & ppr::impl::debug);
