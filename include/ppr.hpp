@@ -21,5 +21,6 @@
 #undef YY_DECL
 #endif
 #include "detail/ppr_eval.cxx"
+#undef PPR_IMPLEMENT
 #endif
 
