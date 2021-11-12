@@ -24,6 +24,7 @@ public:
   friend class sink;
   friend struct live_eval;
 
+  transform() : last_sink(nullptr) {}
   transform(sink& s) : last_sink(&s) {}
 
   void preprocess(std::string_view sources);
@@ -47,6 +48,13 @@ public:
   bool error_bit() const
   {
     return err_bit;
+  }
+
+  sink* exchange(sink* newsink)
+  {
+    sink* save = last_sink;
+    last_sink  = newsink;
+    return save;
   }
 
 private:
@@ -159,13 +167,6 @@ private:
   void        read_macro_fn(token start, tokenizer&, macro&);
   void        read_macro_def(token start, tokenizer&, macro&);
   std::string read_define(tokenizer&, macro&);
-
-  sink* exchange(sink* newsink)
-  {
-    sink* save = last_sink;
-    last_sink  = newsink;
-    return save;
-  }
 
   class token_stream;
 
