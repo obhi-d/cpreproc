@@ -60,8 +60,8 @@ private:
     source(rtoken_cache const& rcache) : cache(rcache) {}
   };
 
-  rtoken            gen;
-  vector<source, 8> read;
+  rtoken                 gen;
+  ppr::vector<source, 8> read;
 
   tokenizer* base = nullptr;
 };

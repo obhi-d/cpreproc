@@ -16,10 +16,10 @@ struct live_eval;
 class PPR_API transform
 {
 public:
-  using token_cache        = vector<token, 8>;
-  using rtoken_cache       = vector<rtoken, 8>;
+  using token_cache        = ppr::vector<token, 8>;
+  using rtoken_cache       = ppr::vector<rtoken, 8>;
   using rtoken_cache       = std::vector<rtoken>;
-  using param_substitution = vector<token_cache, 4>;
+  using param_substitution = ppr::vector<token_cache, 4>;
 
   friend class sink;
   friend struct live_eval;
@@ -29,8 +29,8 @@ public:
 
   void preprocess(std::string_view sources);
 
-  bool eval_bool(std::string_view sources);
-  std::uint64_t  eval_uint(std::string_view sources);
+  bool          eval_bool(std::string_view sources);
+  std::uint64_t eval_uint(std::string_view sources);
 
   void set_transform_code(bool tc)
   {
@@ -157,9 +157,9 @@ private:
   struct macro
   {
     using rtoken = ppr::rtoken;
-    vector<std::string, 4> params;
-    rtoken_cache           content;
-    bool                   is_function = false;
+    ppr::vector<std::string, 4> params;
+    rtoken_cache                content;
+    bool                        is_function = false;
   };
 
   using macromap = std::unordered_map<std::string, macro, ppr::str_hash, ppr::str_equal_test>;
@@ -213,12 +213,12 @@ struct live_eval : public sink
     result_available
   };
 
-  transform&                        tr;
-  transform::token_stream&          ts;
-  std::uint32_t                     i = 0;
-  vector<std::pair<rtoken, loc>, 2> saved;
-  std::pair<rtoken, loc>            empty;
-  sink&                             chain;
+  transform&                             tr;
+  transform::token_stream&               ts;
+  std::uint32_t                          i = 0;
+  ppr::vector<std::pair<rtoken, loc>, 2> saved;
+  std::pair<rtoken, loc>                 empty;
+  sink&                                  chain;
 
 #ifndef PPR_DISABLE_RECORD
   std::string record;

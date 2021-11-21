@@ -1,11 +1,11 @@
 
 #pragma once
 
+#include <cassert>
+#include <functional>
 #include <string>
 #include <string_view>
-#include <cassert>
 #include <vector>
-#include <functional>
 
 #ifdef PPR_DYN_LIB_
 #if defined _WIN32 || defined __CYGWIN__
@@ -35,6 +35,9 @@
 #define PPR_API
 #endif
 
+namespace ppr
+{
+
 #ifdef PPR_SMALL_VECTOR
 template <typename T, unsigned N>
 using vector = PPR_SMALL_VECTOR<T, N>;
@@ -43,21 +46,28 @@ template <typename T, unsigned N>
 using vector = std::vector<T>;
 #endif
 
-namespace ppr
+struct str_equal_test : public std::equal_to<>
 {
-  struct str_equal_test : public std::equal_to<>
-  {
-    using is_transparent = void;
-  };
+  using is_transparent = void;
+};
 
-  struct str_hash
+struct str_hash
+{
+  using is_transparent = void;
+  using key_equal      = std::equal_to<>;             // Pred to use
+  using hash_type      = std::hash<std::string_view>; // just a helper local type
+  size_t operator()(std::string_view txt) const
   {
-    using is_transparent = void;
-    using key_equal = std::equal_to<>;  // Pred to use
-    using hash_type = std::hash<std::string_view>;  // just a helper local type
-    size_t operator()(std::string_view txt) const { return hash_type{}(txt); }
-    size_t operator()(std::string const& txt) const { return hash_type{}(txt); }
-    size_t operator()(char const* txt) const { return hash_type{}(txt); }
-  };
+    return hash_type{}(txt);
+  }
+  size_t operator()(std::string const& txt) const
+  {
+    return hash_type{}(txt);
+  }
+  size_t operator()(char const* txt) const
+  {
+    return hash_type{}(txt);
+  }
+};
 
-}
+} // namespace ppr
