@@ -18,7 +18,6 @@ class PPR_API transform
 public:
   using token_cache        = ppr::vector<token, 8>;
   using rtoken_cache       = ppr::vector<rtoken, 8>;
-  using rtoken_cache       = std::vector<rtoken>;
   using param_substitution = ppr::vector<token_cache, 4>;
 
   friend class sink;
