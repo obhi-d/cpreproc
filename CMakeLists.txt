@@ -12,9 +12,11 @@ set   (PPR_FLEX                      "flex"                                     
 ##
 ## CONFIGURATION
 ##
-set(PPR_TARGET_NAME               ${PROJECT_NAME})
+set(PPR_TARGET_NAME       ${PROJECT_NAME})
 set(PPR_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_CXX_STANDARD 20)
+
+include(GNUInstallDirs)
 
 if (PPR_USE_PRE_GENERATED_PARSERS)
 
@@ -79,7 +81,7 @@ target_include_directories(
     ${PPR_TARGET_NAME}
     INTERFACE $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${${PROJECT_NAME}_BINARY_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
 )
 
 ##
@@ -123,10 +125,10 @@ target_link_libraries(preprocess PRIVATE ${PPR_TARGET_NAME})
 # INSTALL
 
 install(TARGETS ${PROJECT_NAME}
-      EXPORT ${PROJECT_NAME}_Targets
-       ARCHIVE DESTINATION lib
-       LIBRARY DESTINATION lib
-       RUNTIME DESTINATION lib
+        EXPORT ${PROJECT_NAME}_Targets
+         ARCHIVE DESTINATION lib
+         LIBRARY DESTINATION lib
+         RUNTIME DESTINATION lib
        )
 
 include(CMakePackageConfigHelpers)
@@ -134,28 +136,26 @@ write_basic_package_version_file("${PROJECT_NAME}ConfigVersion.cmake"
                                  VERSION ${PROJECT_VERSION}
                                  COMPATIBILITY SameMajorVersion)
 
-if(DEFINED CMAKE_INSTALL_DATAROOTDIR)
-    configure_package_config_file(
+configure_package_config_file(
     "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
     INSTALL_DESTINATION
-    ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+      cmake)
 
 
-    install(EXPORT ${PROJECT_NAME}_Targets
+install(EXPORT ${PROJECT_NAME}_Targets
     FILE ${PROJECT_NAME}Targets.cmake
     NAMESPACE ${PROJECT_NAME}::
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
+    DESTINATION cmake)
 
-    install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-                "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
-endif()
+install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+              "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+              DESTINATION cmake)
 
-install(DIRECTORY include DESTINATION .)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 install(FILES 
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.hxx"
   "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx"
-  DESTINATION include/detail)
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/detail)
 
