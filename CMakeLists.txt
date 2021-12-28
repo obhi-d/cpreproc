@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 project(ppr VERSION 0.0.1 LANGUAGES CXX)
-
+set(CMAKE_CXX_STANDARD 20)
 
 option(PPR_BUILD_TESTS               "Build the unit tests when BUILD_TESTING is enabled." ON)
 option(PPR_USE_LIBCPP_CLANG          "Use libc++ for clang"                                ON)
@@ -76,7 +76,6 @@ endif()
 
 add_dependencies(${PPR_TARGET_NAME} ${PPR_TARGET_NAME}.PreBuild)
 add_library(${PROJECT_NAME}::${PPR_TARGET_NAME} ALIAS ${PPR_TARGET_NAME})
-target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 target_include_directories(
     ${PPR_TARGET_NAME}
     INTERFACE $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
