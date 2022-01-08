@@ -4,6 +4,7 @@
 #include <functional>
 #include <limits>
 #include <string>
+#include <cstring>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
