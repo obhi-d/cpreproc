@@ -1,0 +1,5 @@
+
+#define DEFINE2 4 -  4 *  2
+
+#define It works
+

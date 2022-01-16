@@ -311,10 +311,11 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
   transform::token_cache        local_cache;
   transform::param_substitution substitutions;
   bool                          done = false;
+  std::uint32_t                 depth = 1;
+
   while (!err_bit && !done)
   {
     auto          tok   = tk.get();
-    std::uint32_t depth = 1;
 
     switch (type(tok))
     {
@@ -346,7 +347,7 @@ void transform::expand_macro_call(transform& tf, macromap::iterator it, token_st
 
     case token_type::ty_operator:
 
-      if (!depth && hasop(tok, ','))
+      if (depth==1 && hasop(tok, ','))
       {
         substitutions.emplace_back(std::move(local_cache));
         break;

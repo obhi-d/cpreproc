@@ -216,8 +216,8 @@ struct live_eval : public sink
   transform::token_stream&               ts;
   std::uint32_t                          i = 0;
   ppr::vector<std::pair<rtoken, loc>, 2> saved;
-  std::pair<rtoken, loc>                 empty;
-  sink&                                  chain;
+  std::pair<rtoken, loc> empty;
+  sink&                  chain;
 
 #ifndef PPR_DISABLE_RECORD
   std::string record;
@@ -241,21 +241,23 @@ struct live_eval : public sink
   }
   auto const& get()
   {
-    do
-    {
+    while (true)
+    {      
+      if (i >= static_cast<std::uint32_t>(saved.size()))
+      {
+        i = 0;
+        saved.clear();
+        tr.resolve_tokens(ts, true);
+        if (saved.empty())
+          break;
+      }
       if (i < static_cast<std::uint32_t>(saved.size()))
       {
         auto& ret = saved[i++];
         return ret;
       }
-      else
-      {
-        i = 0;
-        saved.clear();
-        tr.resolve_tokens(ts, true);
-      }
     }
-    while (finished != finish_state::end_of_seq);
+
     return empty;
   }
 

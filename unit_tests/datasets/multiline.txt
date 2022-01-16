@@ -1,0 +1,13 @@
+
+#define DEFINE2 4 - \
+  4 *\
+  2
+
+
+
+#if DEFINE2 < 0
+#define It works
+#else
+#error Failed
+#endif
+

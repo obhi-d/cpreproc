@@ -80,17 +80,17 @@ struct rtoken
   };
   token_type type = token_type::ty_eof;
 
-  rtoken() = default;
-  rtoken(token_type ttype, std::string_view sv, std::int16_t ws, int r = -1)
+  constexpr rtoken() = default;
+  constexpr rtoken(token_type ttype, std::string_view sv, std::int16_t ws, int r = -1)
       : type(ttype), value(sv), whitespaces(ws), replace(r), op()
   {}
-  rtoken(token_type ttype, operator_type optype, std::string_view sv, std::int16_t ws, int r = -1)
+  constexpr rtoken(token_type ttype, operator_type optype, std::string_view sv, std::int16_t ws, int r = -1)
       : type(ttype), value(sv), whitespaces(ws), replace(r), op(optype)
   {}
-  rtoken(operator_type op, std::int16_t ws)
+  constexpr rtoken(operator_type op, std::int16_t ws)
       : type(token_type::ty_operator), op(op), whitespaces(ws), replace(-1)
   {}
-  rtoken(operator2_type op, std::int16_t ws)
+  constexpr rtoken(operator2_type op, std::int16_t ws)
       : type(token_type::ty_operator2), op2(op), whitespaces(ws), replace(-1)
   {}
 
