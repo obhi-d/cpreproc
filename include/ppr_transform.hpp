@@ -295,7 +295,17 @@ struct live_eval : public sink
 
     if (finished != finish_state::none)
       return;
+    if (t.type == ppr::token_type::ty_eof)
+    {
+      finished = finish_state::end_of_seq;
+      return;
+    }
     auto ty = tr.from(t);
+    if (ty.type == ppr::token_type::ty_eof)
+    {
+      finished = finish_state::end_of_seq;
+      return;
+    }
     if (ty.type != token_type::ty_newline)
       saved.emplace_back(std::move(ty), (t.type != token_type::ty_rtoken) ? t.value.td.pos : loc{});
     else
