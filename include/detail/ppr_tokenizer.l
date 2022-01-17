@@ -36,7 +36,7 @@ void  pprtok_free    (void* ptr, void* yyscanner);
 %x pprcode pprcomment pprdirective
 
 
-blank		           [ \t\r]*
+blank		           [ \t]*
 ident		           [a-zA-Z_][a-zA-Z0-9_]*
 integer            [+-]?[1-9]+[0-9]*
 oct                [0][0-9]*
@@ -178,7 +178,8 @@ bracket            [\(\)]
                              ctx.lines(1);
                            }
 
-\n                         {
+[\r]*\n                    {
+                             ctx.skip_commit(yyleng - 1);
                              ctx.lines(1);
                              return ctx.make_newline();
                            }
@@ -193,6 +194,8 @@ bracket            [\(\)]
 "*"+[^*/\n]*               {
                              ctx.read_len(yyleng);
                            }
+
+\r                         ctx.read_len(1);
 
 \n											   {
                              ctx.read_len(1);
