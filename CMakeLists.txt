@@ -99,7 +99,7 @@ if(BUILD_TESTING AND PPR_BUILD_TESTS)
   file(GLOB DATA_FILES ${PROJECT_SOURCE_DIR}/unit_tests/datasets/*.txt)
 
   add_custom_command( 
-	  TARGET unit_test PRE_BUILD 
+	  TARGET unit_test POST_BUILD 
 	   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/datasets ${CMAKE_CURRENT_BINARY_DIR}/datasets 
      COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/references ${CMAKE_CURRENT_BINARY_DIR}/references 
      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/output

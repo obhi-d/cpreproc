@@ -73,6 +73,7 @@ int main(int argc, char* argv[])
 
       sink_adapter sa(out);
       ppr::transform ctx(adapter);
+      //ctx.set_transform_code(true);
       if (name.starts_with("d."))
         ctx.set_ignore_disabled(false);
  

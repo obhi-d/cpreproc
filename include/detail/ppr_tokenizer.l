@@ -36,7 +36,7 @@ void  pprtok_free    (void* ptr, void* yyscanner);
 %x pprcode pprcomment pprdirective
 
 
-blank		           [ \t]*
+blank		           [ \t\r]*
 ident		           [a-zA-Z_][a-zA-Z0-9_]*
 integer            [+-]?[1-9]+[0-9]*
 oct                [0][0-9]*

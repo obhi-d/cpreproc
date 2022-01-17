@@ -32,7 +32,7 @@
 
 
 /**
- ** \file C:/Users/abhis/OneDrive/Documents/ppr/out/build/x64-Debug/detail/ppr_eval.hxx
+ ** \file C:/repos/ppr/out/build/windows-default/detail/ppr_eval.hxx
  ** Define the ppr::parser class.
  */
 
@@ -42,8 +42,8 @@
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
 
-#ifndef YY_PPR_C_USERS_ABHIS_ONEDRIVE_DOCUMENTS_PPR_OUT_BUILD_X64_DEBUG_DETAIL_PPR_EVAL_HXX_INCLUDED
-# define YY_PPR_C_USERS_ABHIS_ONEDRIVE_DOCUMENTS_PPR_OUT_BUILD_X64_DEBUG_DETAIL_PPR_EVAL_HXX_INCLUDED
+#ifndef YY_PPR_C_REPOS_PPR_OUT_BUILD_WINDOWS_DEFAULT_DETAIL_PPR_EVAL_HXX_INCLUDED
+# define YY_PPR_C_REPOS_PPR_OUT_BUILD_WINDOWS_DEFAULT_DETAIL_PPR_EVAL_HXX_INCLUDED
 // "%code requires" blocks.
 
 #include "ppr_eval_type.hpp"
@@ -1988,4 +1988,4 @@ switch (yykind)
 
 
 
-#endif // !YY_PPR_C_USERS_ABHIS_ONEDRIVE_DOCUMENTS_PPR_OUT_BUILD_X64_DEBUG_DETAIL_PPR_EVAL_HXX_INCLUDED
+#endif // !YY_PPR_C_REPOS_PPR_OUT_BUILD_WINDOWS_DEFAULT_DETAIL_PPR_EVAL_HXX_INCLUDED

@@ -11,3 +11,10 @@
 #ifdef DEFINE_A
 #define DEFINE_B 4
 #endif
+
+struct Camera
+{
+  mat4 viewMatrix[DEFINE4];
+  mat4 projMatrix;
+};
+
