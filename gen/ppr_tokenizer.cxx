@@ -1268,7 +1268,7 @@ YY_RULE_SETUP
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-{
+{ // \\\n
                              ctx.skip_commit(2);
                              ctx.lines(1);
                            }
@@ -1276,7 +1276,7 @@ YY_RULE_SETUP
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-{
+{ // [\r]*\n
                              ctx.skip_commit(yyleng - 1);
                              ctx.lines(1);
                              return ctx.make_newline();

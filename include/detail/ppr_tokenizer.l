@@ -173,12 +173,12 @@ bracket            [\(\)]
                              return ctx.make_squote_string(yyleng);
                            }
 
-\\\n                       {
+\\\n                       { // \\\n
                              ctx.skip_commit(2);
                              ctx.lines(1);
                            }
 
-[\r]*\n                    {
+[\r]*\n                    { // [\r]*\n
                              ctx.skip_commit(yyleng - 1);
                              ctx.lines(1);
                              return ctx.make_newline();
