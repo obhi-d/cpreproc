@@ -791,7 +791,9 @@ bool transform::eval_bool(std::string_view sv)
   token_stream ts(tk);
   live_eval    le(*this, ts, *last_sink);
   content     = sv;
+  auto prev = exchange(&le);
   bool result = (bool)eval(le);
+  exchange(prev);
   content     = {};
   return result;
 }
@@ -802,7 +804,9 @@ std::uint64_t transform::eval_uint(std::string_view sv)
   token_stream ts(tk);
   live_eval    le(*this, ts, *last_sink);
   content     = sv;
+  auto prev   = exchange(&le);
   auto result = eval(le).uval();
+  exchange(prev);
   content     = {};
   return result;
 }
