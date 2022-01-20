@@ -642,7 +642,7 @@ void transform::preprocess(std::string_view source)
         if (!section_disabled)
         {
           auto save        = exchange(&le);
-          section_disabled = !eval(le);
+          section_disabled = !(bool)eval(le);
           exchange(save);
 #ifndef PPR_DISABLE_RECORD
           if (le.record_content && section_disabled)
@@ -664,7 +664,7 @@ void transform::preprocess(std::string_view source)
         if (!disable_depth && section_disabled)
         {
           auto save        = exchange(&le);
-          section_disabled = !eval(le);
+          section_disabled = !(bool)eval(le);
           exchange(save);
 #ifndef PPR_DISABLE_RECORD
           if (le.record_content && section_disabled)

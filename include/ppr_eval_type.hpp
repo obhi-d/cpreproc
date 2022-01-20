@@ -163,7 +163,7 @@ struct eval_type
 
   inline operator bool() const
   {
-    return uval() != 0;
+    return uval() != 0 && !null_type;
   }
 
   inline eval_type operator ~() const
