@@ -3,6 +3,10 @@
 #define DEFINE3 2
 #define DEFINE4 DEFINE2() * 6
 
+#define DEFINE_A 
+
+#define DEFINE_B 4
+
 struct Camera
 {
   mat4 viewMatrix[DEFINE4];

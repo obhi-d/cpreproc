@@ -100,8 +100,22 @@ if(BUILD_TESTING AND PPR_BUILD_TESTS)
 
   add_custom_command( 
 	  TARGET unit_test POST_BUILD 
-	   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/datasets ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/unit_tests/references ${CMAKE_CURRENT_BINARY_DIR}/references 
+	   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic2.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic3.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic4.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/macro1.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/macro2.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/multiline.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic2.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic3.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic4.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/macro1.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/macro2.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/multiline.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+
      COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/output
       )
 

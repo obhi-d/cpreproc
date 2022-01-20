@@ -1,11 +1,10 @@
 
-#define DEFINE2 4 - \
-  4 *\
-  2
+#define DEFINE2 4\
+  + 4
 
 
 
-#if DEFINE2 < 0
+#if DEFINE2 == 8
 #define It works
 #else
 #error Failed

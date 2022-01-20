@@ -1,5 +1,5 @@
 
-#define DEFINE2 4 -  4 *  2
+#define DEFINE2 4  + 4
 
 #define It works
 
