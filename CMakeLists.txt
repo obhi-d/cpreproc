@@ -105,26 +105,21 @@ if(BUILD_TESTING AND PPR_BUILD_TESTS)
   file(GLOB DATA_FILES ${PROJECT_SOURCE_DIR}/unit_tests/datasets/*.txt)
 
   add_custom_command( 
-	  TARGET unit_test POST_BUILD 
-	   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic2.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic3.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/basic4.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/macro1.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/macro2.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/multiline.txt ${CMAKE_CURRENT_BINARY_DIR}/datasets 
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/datasets/test.h
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/references/test.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/unit_tests/datasets/test.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/unit_tests/references/test.h
+	   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/datasets/test.h ${CMAKE_CURRENT_BINARY_DIR}/datasets
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/test.h ${CMAKE_CURRENT_BINARY_DIR}/references
+  )
 
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic2.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic3.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/basic4.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/macro1.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/macro2.txt ${CMAKE_CURRENT_BINARY_DIR}/references
-     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_SOURCE_DIR}/unit_tests/references/multiline.txt ${CMAKE_CURRENT_BINARY_DIR}/references
+  add_custom_target(
+    unit_test_data
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/datasets/test.h
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/references/test.h
+  )
 
-     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/output
-      )
-
+  add_dependencies(unit_test unit_test_data)
   target_link_libraries(unit_test PRIVATE ${PPR_TARGET_NAME})
 endif()
 

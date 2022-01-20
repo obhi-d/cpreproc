@@ -1,5 +1,0 @@
-
-#define DEFINE2 4  + 4
-
-#define It works
-

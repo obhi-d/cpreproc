@@ -665,6 +665,7 @@ void transform::preprocess(std::string_view source)
         if (!disable_depth && section_disabled)
         {
           auto save        = exchange(&le);
+          section_disabled = false; // Unset here so that next tokens are accepted
           section_disabled = !(bool)eval(le);
           exchange(save);
 #ifndef PPR_DISABLE_RECORD

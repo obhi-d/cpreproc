@@ -1,5 +1,0 @@
-
-
-#define DEFINE3 2
-#define DEFINE4 DEFINE2 * 6
-
