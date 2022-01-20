@@ -653,6 +653,7 @@ void transform::preprocess(std::string_view source)
           }
 
 #endif
+          le.reset();
           handled = true;
         }
         else
@@ -674,6 +675,7 @@ void transform::preprocess(std::string_view source)
             post(token(le.record));
           }
 #endif
+          le.reset();
           handled = true;
         }
         else
