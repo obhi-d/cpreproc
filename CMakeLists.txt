@@ -65,7 +65,13 @@ add_custom_target(
 ##
 message("Target name: ${PPR_TARGET_NAME}")
 
-add_library(${PPR_TARGET_NAME} INTERFACE)
+add_library(${PPR_TARGET_NAME} STATIC 
+  "src/ppr_sink.cxx"
+  "src/ppr_tokenizer.cxx"
+  "src/ppr_transform.cxx"
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_eval.cxx" 
+  "${CMAKE_CURRENT_BINARY_DIR}/detail/ppr_tokenizer.cxx" 
+  )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (PPR_USE_LIBCPP_CLANG)
@@ -77,8 +83,8 @@ endif()
 add_dependencies(${PPR_TARGET_NAME} ${PPR_TARGET_NAME}.PreBuild)
 add_library(${PROJECT_NAME}::${PPR_TARGET_NAME} ALIAS ${PPR_TARGET_NAME})
 target_include_directories(
-    ${PPR_TARGET_NAME}
-    INTERFACE $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
+    ${PPR_TARGET_NAME} PUBLIC
+    $<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${${PROJECT_NAME}_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
 )

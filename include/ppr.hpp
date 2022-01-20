@@ -8,19 +8,3 @@
 #include "ppr_sink.hpp"
 #include "ppr_tokenizer.hpp"
 #include "ppr_transform.hpp"
-
-#ifdef PPR_IMPLEMENT
-#include "detail/ppr_sink.hxx"
-#include "detail/ppr_tokenizer.hxx"
-#include "detail/ppr_transform.hxx"
-#include "detail/ppr_tokenizer.cxx"
-#ifdef yylex
-#undef yylex
-#endif
-#ifdef YY_DECL
-#undef YY_DECL
-#endif
-#include "detail/ppr_eval.cxx"
-#undef PPR_IMPLEMENT
-#endif
-
